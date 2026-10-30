@@ -40,8 +40,13 @@ página del PDF con el número o la marca de agua, la lista de archivos que sald
 En audio y vídeo, «Probar con una muestra» convierte unos segundos con los ajustes
 elegidos y estima lo que ocupará el archivo entero.
 
-Funciona sin conexión una vez abierta (service worker) y se puede instalar como app
-en el móvil o el ordenador. En ordenador y portátil, la portada enseña todas las
+**Funciona sin conexión.** Al abrirla (o instalarla como app en el móvil o el
+ordenador) guarda en el navegador todo lo que necesita: la interfaz, las
+tipografías y todas las librerías, unos 9 MB. Desde ese momento funciona aunque
+no haya red y aunque el servidor ya no exista. La única excepción es el núcleo de
+ffmpeg (32 MB), que se guarda la primera vez que se usa una herramienta de audio
+o vídeo. Si se añade o actualiza una librería, hay que regenerar la lista de lo
+que se guarda: `node scripts/lista-offline.js`. En ordenador y portátil, la portada enseña todas las
 herramientas de un vistazo, sin desplazarse. Hay un buscador en la cabecera
 («heic», «mp3», «excel»…).
 
