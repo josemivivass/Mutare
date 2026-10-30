@@ -3,7 +3,7 @@
 // seguridad de la página no permite scripts en línea.
 (function () {
   var t = null;
-  try { t = localStorage.getItem('pdfconverter.tema'); } catch (e) {}
+  try { t = localStorage.getItem('mutare.tema'); } catch (e) {}
   if (t !== 'light' && t !== 'dark') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   document.documentElement.dataset.theme = t;
 })();

@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "PDF Converter",
-  "short_name": "PDF",
+  "name": "Mutare",
+  "short_name": "Mutare",
   "description": "Herramientas de PDF que trabajan en tu dispositivo: juntar, separar, ordenar, convertir, numerar, firmar…",
   "lang": "es",
   "start_url": "/",

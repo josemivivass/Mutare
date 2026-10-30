@@ -1,4 +1,4 @@
-# PDF Converter: servidor Node sin dependencias que solo entrega archivos.
+# Mutare: servidor Node sin dependencias que solo entrega archivos.
 # Los PDF se procesan en el navegador: el contenedor no guarda nada.
 FROM node:22-alpine
 

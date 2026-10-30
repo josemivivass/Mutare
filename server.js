@@ -1,6 +1,6 @@
 'use strict';
 
-// PDF Converter: servidor de archivos estáticos sin dependencias (solo Node).
+// Mutare: servidor de archivos estáticos sin dependencias (solo Node).
 // Arranque: node server.js   →   http://localhost:9996
 // Variables de entorno opcionales: PORT, HOST
 //
@@ -134,7 +134,7 @@ const servidor = http.createServer((req, res) => {
 
 servidor.keepAliveTimeout = 5000;
 servidor.listen(PORT, HOST, () => {
-  console.log(`PDF Converter en http://localhost:${PORT}  (los PDF se procesan en el navegador; aquí no llega ninguno)`);
+  console.log(`Mutare en http://localhost:${PORT}  (los PDF se procesan en el navegador; aquí no llega ninguno)`);
 });
 
 for (const senal of ['SIGTERM', 'SIGINT']) process.on(senal, () => servidor.close(() => process.exit(0)));

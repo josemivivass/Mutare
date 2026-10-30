@@ -1,8 +1,8 @@
 services:
-  pdf-converter:
+  mutare:
     build: .
-    image: pdf-converter:latest
-    container_name: pdf-converter
+    image: mutare:latest
+    container_name: mutare
     restart: unless-stopped
     init: true
     read_only: true

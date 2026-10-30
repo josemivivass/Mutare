@@ -1,13 +1,13 @@
 'use strict';
 
-// Service worker de PDF Converter: permite usar la app sin conexión.
+// Service worker de Mutare: permite usar la app sin conexión.
 // - La interfaz (HTML, CSS, JS) se pide primero a la red y, si no hay conexión,
 //   se sirve la última copia guardada: así siempre ves la versión más reciente.
 // - Las librerías, fuentes e iconos llevan la versión en la ruta y no cambian:
 //   se sirven de la caché y solo se descargan la primera vez que hacen falta.
 // Los PDF nunca pasan por aquí: se procesan en la página y no salen del navegador.
 
-const CACHE = 'pdfconverter-v1';
+const CACHE = 'mutare-v1';
 const INTERFAZ = [
   '/', '/index.html', '/styles.css', '/tema.js', '/app.js', '/herramientas.js', '/ui.js',
   '/motor.js', '/util.js', '/iconos.js', '/zip.js', '/manifest.webmanifest',

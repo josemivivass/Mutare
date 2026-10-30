@@ -1,4 +1,4 @@
-# PDF Converter
+# Mutare
 
 Herramientas básicas de PDF que trabajan **en tu propio navegador**: los archivos
 nunca se suben a ningún sitio, ni siquiera a este servidor. El servidor solo
@@ -52,28 +52,11 @@ El contenedor es de solo lectura y está limitado a 96 MB de RAM (usa unos 50, c
   - `vendor/pdf-lib-1.17.1/`: crea y modifica PDF (licencia MIT).
   - `vendor/pdfjs-6.2.108/`: lee y dibuja PDF, versión *legacy* para navegadores
     no tan recientes (licencia Apache 2.0).
-  - `fuentes/`: tipografías Newsreader e Instrument Sans (ver abajo).
+  - `fuentes/`: tipografías Newsreader e Instrument Sans.
 
 Todo está en el repositorio: la web no descarga nada de internet.
 
 ## Fuentes
 
-Las tipografías no van incluidas todavía; mientras falten se usan las del sistema.
-Para descargarlas a `public/fuentes/` (PowerShell, desde la carpeta del proyecto):
-
-```powershell
-$base = "https://cdn.jsdelivr.net/npm/@fontsource"
-$archivos = @(
-  "newsreader/files/newsreader-latin-400-normal.woff2",
-  "newsreader/files/newsreader-latin-400-italic.woff2",
-  "newsreader/files/newsreader-latin-500-normal.woff2",
-  "newsreader/files/newsreader-latin-500-italic.woff2",
-  "instrument-sans/files/instrument-sans-latin-400-normal.woff2",
-  "instrument-sans/files/instrument-sans-latin-500-normal.woff2",
-  "instrument-sans/files/instrument-sans-latin-600-normal.woff2"
-)
-New-Item -ItemType Directory -Force public\fuentes | Out-Null
-foreach ($a in $archivos) { Invoke-WebRequest "$base/$a" -OutFile ("public\fuentes\" + (Split-Path $a -Leaf)) }
-```
-
-Ambas tienen licencia SIL Open Font License.
+`public/fuentes/` lleva Newsreader e Instrument Sans (de Fontsource), ambas con
+licencia SIL Open Font License.

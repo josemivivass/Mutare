@@ -16,7 +16,7 @@ function pintarBotonTema() {
 btnTema.addEventListener('click', () => {
   const nuevo = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
   document.documentElement.dataset.theme = nuevo;
-  try { localStorage.setItem('pdfconverter.tema', nuevo); } catch {}
+  try { localStorage.setItem('mutare.tema', nuevo); } catch {}
   pintarBotonTema();
 });
 pintarBotonTema();
@@ -24,7 +24,7 @@ pintarBotonTema();
 // ---- Pantallas
 function inicio() {
   miga.hidden = true;
-  document.title = 'PDF Converter';
+  document.title = 'Mutare';
   const grupos = [...new Set(HERRAMIENTAS.map((h) => h.grupo))];
   contenido.innerHTML = `
     <p class="privacidad">${I.candado}<span>Todo se hace en tu dispositivo: los archivos no se suben a ningún sitio, ni siquiera a este servidor. Puedes usarla sin conexión.</span></p>
@@ -36,7 +36,7 @@ function inicio() {
 
 function herramienta(h) {
   miga.hidden = false; miga.textContent = h.nombre;
-  document.title = `${h.nombre} · PDF Converter`;
+  document.title = `${h.nombre} · Mutare`;
   contenido.innerHTML = `<a class="volver" href="#">${I.volver}Todas las herramientas</a>
     <div class="cab-herr"><span class="icono-herr">${h.icono}</span><div><h2>${esc(h.nombre)}</h2><p>${esc(h.desc)}</p></div></div>
     <div class="cuerpo-herr"></div>`;
