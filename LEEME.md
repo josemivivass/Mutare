@@ -66,6 +66,31 @@ docker compose up -d --build
 El contenedor es de solo lectura y está limitado a 96 MB de RAM (usa unos 50, casi todo es el propio Node).
 La conversión la hace el navegador de quien la usa: el servidor no hace ningún trabajo pesado.
 
+## Despliegue en el homelab
+
+En el servidor de casa se monta desde el repositorio HomeLabDockers (carpeta
+`mutare/`, puerto 9996). Cada push a `main` de este repositorio se aplica allí
+solo:
+
+1. El workflow `.github/workflows/desplegar.yml` (corre en GitHub) avisa a
+   HomeLabDockers.
+2. El runner de HomeLabDockers, que está en el servidor, se trae el código y
+   reconstruye el contenedor. Tarda unos segundos.
+3. Si el aviso no llega (servidor apagado, token caducado…), el servidor revisa
+   este repositorio cada 5 minutos de todas formas.
+
+El aviso necesita un token guardado como secreto, **una sola vez**:
+
+- GitHub → Settings → Developer settings → Fine-grained tokens → *Generate new
+  token*. Repository access: *Only select repositories* → **HomeLabDockers**.
+  Permissions → **Contents: Read and write** (es el permiso que pide GitHub para
+  lanzar un aviso a otro repositorio). Caducidad: la que prefieras.
+- En este repositorio: Settings → Secrets and variables → Actions → *New
+  repository secret*. Nombre **`HOMELAB_TOKEN`**, valor: el token.
+
+Si el token caduca, el workflow sale en rojo y el servidor sigue
+actualizándose cada 5 minutos hasta que pongas otro.
+
 ## Cómo está hecho
 
 - `server.js`: servidor estático mínimo (solo GET/HEAD). Comprime en memoria los
