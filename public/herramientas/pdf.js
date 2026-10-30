@@ -1,11 +1,11 @@
 // Las herramientas: cada una monta su pantalla dentro de «el» y devuelve una
 // función de limpieza (libera los documentos abiertos al salir).
 
-import { $, $$, aviso, tamano, base, rangos, descargar } from '../util.js';
+import { $, $$, esc, aviso, tamano, base, rangos, descargar } from '../util.js';
 import { I } from '../iconos.js';
 import { crearZip } from '../zip.js';
 import * as M from '../motor.js';
-import { zona, prepararArchivos, ListaArchivos, RejillaPaginas, resultado, tarea, PanelFirma, imagenAFirma, ACEPTA_PDF, ACEPTA_IMG, ACEPTA_TODO } from '../ui.js';
+import { zona, prepararArchivos, ListaArchivos, RejillaPaginas, resultado, tarea, PanelFirma, imagenAFirma, VistaPrevia, ACEPTA_PDF, ACEPTA_IMG, ACEPTA_TODO } from '../ui.js';
 import { html, radios, valorRadio, unPdf } from './comun.js';
 
 const pdfBlob = (bytes) => new Blob([bytes], { type: 'application/pdf' });
@@ -33,8 +33,9 @@ export const PDF = [
     },
   },
   {
-    id: 'organizar', categoria: 'pdf', nombre: 'Ordenar páginas', icono: I.organizar,
+    id: 'organizar', alias: ['rotar'], categoria: 'pdf', nombre: 'Ordenar y girar páginas', icono: I.organizar,
     desc: 'Mueve, gira, quita o añade páginas en blanco. También mezcla varios PDF.',
+    palabras: 'rotar girar orientacion quitar borrar eliminar paginas reordenar mover extraer',
     montar(el) {
       el.appendChild(zona({ acepta: ACEPTA_PDF, titulo: 'Elige uno o varios PDF', compacta: false, alElegir: async (files) => {
         for (const it of await prepararArchivos(files)) await rej.anadirPdf(it.nombre, it.bytes);
@@ -97,100 +98,103 @@ export const PDF = [
         <label class="campo" data-modo="n" hidden>Páginas por archivo <input type="number" min="1" value="2" name="n"></label>
         <label class="campo" data-modo="rangos" hidden>Rangos (un archivo por cada uno) <input type="text" name="rangos" placeholder="1-3, 4-6, 7-"></label>
         <label class="campo" data-modo="extraer" hidden>Páginas que quieres (en un solo PDF) <input type="text" name="extraer" placeholder="1, 3, 5-8"></label>
-        <p class="ayuda info"></p>
+        <p class="ayuda info"></p><div class="hueco-vista"></div>
         <button type="button" class="btn acento grande">Separar</button><div class="progreso"></div></div>`);
+      const vista = new VistaPrevia($('.hueco-vista', panel), 'Saldrán estos archivos');
+      const grupos = () => {
+        const t = doc.paginas, modo = valorRadio(panel, 'modo');
+        if (modo === 'cada') return [...Array(t).keys()].map((i) => [i]);
+        if (modo === 'n') { const n = Math.max(1, Number($('[name=n]', panel).value) || 1); const g = []; for (let i = 0; i < t; i += n) g.push([...Array(Math.min(n, t - i)).keys()].map((k) => i + k)); return g; }
+        if (modo === 'rangos') return rangos($('[name=rangos]', panel).value, t);
+        return [rangos($('[name=extraer]', panel).value, t).flat()];
+      };
+      const nombreDe = (g) => (g.length === 1 ? `${g[0] + 1}` : `${g[0] + 1}-${g[g.length - 1] + 1}`);
       const actualizar = () => {
         const modo = valorRadio(panel, 'modo');
         $$('[data-modo]', panel).forEach((x) => { x.hidden = x.dataset.modo !== modo; });
         const t = doc?.paginas || 0;
         const info = { cada: `Saldrán ${t} archivos, uno por página, dentro de un ZIP.`, n: 'Saldrá un ZIP con los archivos.', rangos: 'Por ejemplo «1-3, 4-6, 7-»: el último va hasta el final. Saldrá un ZIP.', extraer: 'Por ejemplo «1, 3, 5-8». Saldrá un solo PDF con esas páginas.' };
         $('.info', panel).textContent = `El documento tiene ${t} páginas. ${info[modo]}`;
+        vista.programar(async () => {
+          const g = grupos();
+          if (!g.length || !g[0].length) return null;
+          const b = base(doc.nombre);
+          const ul = document.createElement('ol'); ul.className = 'vp-lista';
+          const nombres = g.length === 1 ? [`${b}-paginas.pdf`] : g.map((x) => `${b}-${nombreDe(x)}.pdf`);
+          ul.innerHTML = g.slice(0, 60).map((x, k) => `<li>${esc(nombres[k])} <small>· ${x.length} página${x.length === 1 ? '' : 's'}${x.length > 1 && x.length < 12 ? `: ${x.map((i) => i + 1).join(', ')}` : ''}</small></li>`).join('') + (g.length > 60 ? `<li>… y ${g.length - 60} más</li>` : '');
+          return { nodo: ul, info: `${g.length} archivo${g.length === 1 ? '' : 's'}${g.length > 1 ? ' en un ZIP' : ''}` };
+        }, 200);
       };
-      panel.addEventListener('change', actualizar);
+      panel.addEventListener('input', actualizar);
       $('button.acento', panel).addEventListener('click', (e) => tarea(e.currentTarget, $('.progreso', panel), async (prog) => {
-        const t = doc.paginas, modo = valorRadio(panel, 'modo');
-        let grupos;
-        if (modo === 'cada') grupos = [...Array(t).keys()].map((i) => [i]);
-        if (modo === 'n') { const n = Math.max(1, Number($('[name=n]', panel).value) || 1); grupos = []; for (let i = 0; i < t; i += n) grupos.push([...Array(Math.min(n, t - i)).keys()].map((k) => i + k)); }
-        if (modo === 'rangos') grupos = rangos($('[name=rangos]', panel).value, t);
-        if (modo === 'extraer') grupos = [rangos($('[name=extraer]', panel).value, t).flat()];
-        const salida = await M.separar(doc.bytes, grupos, prog);
+        const g = grupos();
+        const salida = await M.separar(doc.bytes, g, prog);
         const b = base(doc.nombre);
         if (salida.length === 1) return resultado(panel, { blob: pdfBlob(salida[0]), nombre: `${b}-paginas.pdf` });
-        const nombreDe = (g) => (g.length === 1 ? `${g[0] + 1}` : `${g[0] + 1}-${g[g.length - 1] + 1}`);
-        const zip = crearZip(salida.map((d, k) => ({ nombre: `${b}-${nombreDe(grupos[k])}.pdf`, datos: d })));
-        await resultado(panel, { blob: zip, nombre: `${b}-separado.zip`, detalle: `${salida.length} archivos · ${tamano(zip.size)}` });
+        const grupos_ = g;
+        const zip = crearZip(salida.map((d, k) => ({ nombre: `${b}-${nombreDe(grupos_[k])}.pdf`, datos: d })));
+        await resultado(panel, { ver: false, blob: zip, nombre: `${b}-separado.zip`, detalle: `${salida.length} archivos · ${tamano(zip.size)}` });
       }));
     },
   },
   {
-    id: 'rotar', categoria: 'pdf', nombre: 'Rotar PDF', icono: I.rotar,
-    desc: 'Gira todas las páginas, o solo las que elijas.',
+    id: 'pdf-convertir', alias: ['aimagenes', 'texto'], categoria: 'pdf', nombre: 'Convertir PDF', icono: I.aimagenes,
+    desc: 'Cada página como imagen JPG o PNG, o todo el texto para copiarlo o guardarlo.',
+    palabras: 'pdf a jpg png imagen imagenes texto txt extraer copiar',
     montar(el) {
-      let doc = null;
-      unPdf(el, async (it) => { doc = it; rej.destruir(); rej.fuentes = []; rej.paginas = []; rej.sel.clear(); await rej.anadirPdf(it.nombre, it.bytes); panel.hidden = false; });
+      let doc = null, texto = null;
+      unPdf(el, (it) => { doc = it; texto = null; panel.hidden = false; act(); });
       const panel = html(el, `<div class="panel" hidden>
-        <div class="campo">Giro ${radios('giro', [['90', '90° derecha'], ['180', '180°'], ['270', '90° izquierda']], '90')}</div>
-        <p class="ayuda">Si eliges páginas abajo, solo se giran esas; si no, todas.</p>
-        <div class="rejilla"></div>
-        <button type="button" class="btn acento grande">Rotar y descargar</button><div class="progreso"></div></div>`);
-      const rej = new RejillaPaginas($('.rejilla', panel), {});
-      // Vista previa: las miniaturas muestran el giro elegido
-      const previa = () => {
-        const g = Number(valorRadio(panel, 'giro'));
-        for (const p of rej.paginas) p.giro = !rej.sel.size || rej.sel.has(p.id) ? g : 0;
-        $$('.pag', rej.el).forEach((n, k) => rej.aplicarGiro(n, rej.paginas[k]));
-      };
-      rej.alCambiar = previa; panel.addEventListener('change', previa);
-      $('button.acento', panel).addEventListener('click', (e) => tarea(e.currentTarget, $('.progreso', panel), async () => {
-        const indices = rej.sel.size ? rej.paginas.filter((p) => rej.sel.has(p.id)).map((p) => p.i) : null;
-        const bytes = await M.rotar(doc.bytes, Number(valorRadio(panel, 'giro')), indices);
-        await resultado(panel, { blob: pdfBlob(bytes), nombre: `${base(doc.nombre)}-rotado.pdf` });
-      }));
-      return () => rej.destruir();
-    },
-  },
-
-  // ------------------------------------------------------------------ Convertir
-  {
-    id: 'imagenes', categoria: 'pdf', nombre: 'Imágenes a PDF', icono: I.imagenes,
-    desc: 'Fotos o capturas (JPG, PNG, WebP…) a un PDF, una por página.',
-    montar(el) {
-      el.appendChild(zona({ acepta: ACEPTA_IMG, titulo: 'Elige las imágenes', alElegir: async (f) => lista.anadir(await prepararArchivos(f)) }));
-      const lista = new ListaArchivos(el, (items) => { panel.hidden = !items.length; });
-      const panel = html(el, `<div class="panel" hidden><div class="opciones-rejilla">
-        <label class="campo">Tamaño de página <select name="tam"><option value="a4">A4</option><option value="carta">Carta</option><option value="ajustar">El de cada imagen</option></select></label>
-        <label class="campo">Orientación <select name="orientacion"><option value="auto">Según la imagen</option><option value="vertical">Vertical</option><option value="horizontal">Horizontal</option></select></label>
-        <label class="campo">Margen <select name="margen"><option value="0">Sin margen</option><option value="20" selected>Pequeño</option><option value="40">Grande</option></select></label>
-        </div><button type="button" class="btn acento grande">Crear PDF</button><div class="progreso"></div></div>`);
-      panel.addEventListener('change', () => { const aj = $('[name=tam]', panel).value === 'ajustar'; $('[name=orientacion]', panel).disabled = aj; $('[name=margen]', panel).disabled = aj; });
-      $('button.acento', panel).addEventListener('click', (e) => tarea(e.currentTarget, $('.progreso', panel), async (prog) => {
-        const bytes = await M.imagenesAPdf(lista.items, { tam: $('[name=tam]', panel).value, orientacion: $('[name=orientacion]', panel).value, margen: Number($('[name=margen]', panel).value) }, prog);
-        await resultado(panel, { blob: pdfBlob(bytes), nombre: `${base(lista.items[0].nombre)}.pdf`, detalle: `${lista.items.length} página${lista.items.length === 1 ? '' : 's'} · ${tamano(bytes.length)}` });
-      }));
-    },
-  },
-  {
-    id: 'aimagenes', categoria: 'pdf', nombre: 'PDF a imágenes', icono: I.aimagenes,
-    desc: 'Cada página como imagen PNG o JPG.',
-    montar(el) {
-      let doc = null;
-      unPdf(el, (it) => { doc = it; panel.hidden = false; });
-      const panel = html(el, `<div class="panel" hidden><div class="opciones-rejilla">
-        <div class="campo">Formato ${radios('formato', [['jpg', 'JPG'], ['png', 'PNG']], 'jpg')}</div>
-        <label class="campo">Resolución <select name="ppp"><option value="72">Pantalla (72 ppp)</option><option value="150" selected>Buena (150 ppp)</option><option value="300">Impresión (300 ppp)</option></select></label>
-        <label class="campo">Páginas <input type="text" name="paginas" placeholder="Todas (o p. ej. 1-3, 5)"></label>
-        </div><p class="ayuda">Si sale más de una imagen, se descargan juntas en un ZIP.</p>
-        <button type="button" class="btn acento grande">Convertir</button><div class="progreso"></div></div>`);
-      $('button.acento', panel).addEventListener('click', (e) => tarea(e.currentTarget, $('.progreso', panel), async (prog) => {
-        const txt = $('[name=paginas]', panel).value.trim();
-        const indices = txt ? [...new Set(rangos(txt, doc.paginas).flat())] : null;
-        const formato = valorRadio(panel, 'formato');
-        const imgs = await M.aImagenes(doc.bytes, { formato, ppp: Number($('[name=ppp]', panel).value), indices, nombre: base(doc.nombre) }, prog);
-        if (imgs.length === 1) return resultado(panel, { blob: new Blob([imgs[0].datos], { type: formato === 'png' ? 'image/png' : 'image/jpeg' }), nombre: imgs[0].nombre });
-        const zip = crearZip(imgs);
-        await resultado(panel, { blob: zip, nombre: `${base(doc.nombre)}-imagenes.zip`, detalle: `${imgs.length} imágenes · ${tamano(zip.size)}` });
-      }));
+        <div class="campo">Convertir a ${radios('modo', [['imagenes', 'Imágenes'], ['texto', 'Texto']], 'imagenes')}</div>
+        <div data-modo="imagenes"><div class="opciones-rejilla">
+          <div class="campo">Formato ${radios('formato', [['jpg', 'JPG'], ['png', 'PNG']], 'jpg')}</div>
+          <label class="campo">Resolución <select name="ppp"><option value="72">Pantalla (72 ppp)</option><option value="150" selected>Buena (150 ppp)</option><option value="300">Impresión (300 ppp)</option></select></label>
+          <label class="campo" data-si="jpg">Calidad <span class="valor" data-v="calidad">90 %</span><input type="range" name="calidad" min="40" max="100" step="5" value="90"></label>
+          <label class="campo">Páginas <input type="text" name="paginas" placeholder="Todas (o p. ej. 1-3, 5)"></label>
+        </div><div class="hueco-vista"></div>
+        <p class="ayuda">Si sale más de una imagen, se descargan juntas en un ZIP.</p>
+        <button type="button" class="btn acento grande" data-a="imagenes">Convertir</button></div>
+        <div data-modo="texto" hidden>
+          <textarea class="texto-salida" readonly></textarea>
+          <div class="acciones-final"><button type="button" class="btn acento" data-a="txt">${I.descargar}Descargar .txt</button><button type="button" class="btn" data-a="copiar">${I.copiar}Copiar</button></div>
+          <p class="ayuda">Si el PDF es un escaneo (una foto del papel), no tiene texto que sacar.</p></div>
+        <div class="progreso"></div></div>`);
+      const vista = new VistaPrevia($('.hueco-vista', panel), 'Vista previa (primera página elegida)');
+      const indices = () => { const t = $('[name=paginas]', panel).value.trim(); return t ? [...new Set(rangos(t, doc.paginas).flat())] : null; };
+      async function act() {
+        const modo = valorRadio(panel, 'modo'), formato = valorRadio(panel, 'formato');
+        $$('[data-modo]', panel).forEach((x) => { x.hidden = x.dataset.modo !== modo; });
+        $('[data-si=jpg]', panel).hidden = formato !== 'jpg';
+        $('[data-v=calidad]', panel).textContent = `${$('[name=calidad]', panel).value} %`;
+        if (modo === 'imagenes') vista.programar(async () => {
+          let ind; try { ind = indices(); } catch (e) { throw e; }
+          const primera = ind ? ind[0] : 0, total = ind ? ind.length : doc.paginas;
+          const [img] = await M.aImagenes(doc.bytes, { formato, ppp: Number($('[name=ppp]', panel).value), indices: [primera], nombre: base(doc.nombre), calidad: Number($('[name=calidad]', panel).value) / 100 });
+          const blob = new Blob([img.datos], { type: formato === 'png' ? 'image/png' : 'image/jpeg' });
+          const bm = await createImageBitmap(blob); const dims = `${bm.width}×${bm.height} px`; bm.close();
+          return { blob, nombre: img.nombre, info: `Página ${primera + 1} · ${dims} · ${tamano(img.datos.length)}${total > 1 ? ` · ${total} imágenes, ≈ ${tamano(img.datos.length * total)} en total` : ''}` };
+        });
+        else if (texto === null) {
+          const ta = $('textarea', panel); ta.value = 'Sacando el texto…';
+          texto = await M.extraerTexto(doc.bytes, (m) => { $('.progreso', panel).textContent = m; });
+          $('.progreso', panel).textContent = '';
+          ta.value = texto;
+          if (!texto.replace(/--- Página \d+ ---/g, '').trim()) aviso('Este PDF no tiene texto: probablemente es un escaneo', { error: true });
+        }
+      }
+      panel.addEventListener('input', act);
+      panel.addEventListener('click', (e) => {
+        const a = e.target.closest('[data-a]')?.dataset.a; if (!a) return;
+        if (a === 'txt') descargar(new Blob([texto || ''], { type: 'text/plain;charset=utf-8' }), `${base(doc.nombre)}.txt`);
+        if (a === 'copiar') navigator.clipboard.writeText(texto || '').then(() => aviso('Texto copiado'), () => aviso('No se pudo copiar', { error: true }));
+        if (a === 'imagenes') tarea(e.target.closest('button'), $('.progreso', panel), async (prog) => {
+          const formato = valorRadio(panel, 'formato');
+          const imgs = await M.aImagenes(doc.bytes, { formato, ppp: Number($('[name=ppp]', panel).value), indices: indices(), nombre: base(doc.nombre), calidad: Number($('[name=calidad]', panel).value) / 100 }, prog);
+          if (imgs.length === 1) return resultado(panel, { blob: new Blob([imgs[0].datos], { type: formato === 'png' ? 'image/png' : 'image/jpeg' }), nombre: imgs[0].nombre });
+          const zip = crearZip(imgs);
+          await resultado(panel, { blob: zip, nombre: `${base(doc.nombre)}-imagenes.zip`, detalle: `${imgs.length} imágenes · ${tamano(zip.size)}` });
+        });
+      });
     },
   },
   {
@@ -198,7 +202,7 @@ export const PDF = [
     desc: 'Reduce lo que ocupa: sin perder nada, o mucho más convirtiendo las páginas en imágenes.',
     montar(el) {
       let doc = null;
-      unPdf(el, (it) => { doc = it; panel.hidden = false; });
+      unPdf(el, (it) => { doc = it; panel.hidden = false; act(); });
       const panel = html(el, `<div class="panel" hidden>
         <div class="campo">Modo ${radios('modo', [['ligera', 'Ligera, sin perder calidad'], ['fuerte', 'Fuerte (páginas a imagen)']], 'ligera')}</div>
         <div data-modo="ligera"><label class="check"><input type="checkbox" name="meta"> Quitar también los metadatos (autor, programa…)</label>
@@ -207,13 +211,21 @@ export const PDF = [
           <label class="campo">Resolución <select name="ppp"><option value="72">Baja (72 ppp)</option><option value="110" selected>Media (110 ppp)</option><option value="150">Alta (150 ppp)</option></select></label>
           <label class="campo">Calidad JPEG <span class="valor" data-v="calidad">60 %</span><input type="range" name="calidad" min="30" max="90" step="5" value="60"></label>
           </div><label class="check"><input type="checkbox" name="gris"> Blanco y negro (ocupa aún menos)</label>
-          <p class="ayuda">Ideal para escaneos y documentos con fotos. Ojo: el texto deja de poder seleccionarse o buscarse.</p></div>
+          <p class="ayuda">Ideal para escaneos y documentos con fotos. Ojo: el texto deja de poder seleccionarse o buscarse.</p><div class="hueco-vista"></div></div>
         <button type="button" class="btn acento grande">Comprimir</button><div class="progreso"></div></div>`);
-      panel.addEventListener('input', () => {
+      const vista = new VistaPrevia($('.hueco-vista', panel), 'Vista previa (primera página)');
+      const opFuerte = () => ({ ppp: Number($('[name=ppp]', panel).value), calidad: Number($('[name=calidad]', panel).value) / 100, gris: $('[name=gris]', panel).checked });
+      const act = () => {
         const modo = valorRadio(panel, 'modo');
         $$('[data-modo]', panel).forEach((x) => { x.hidden = x.dataset.modo !== modo; });
         $('[data-v=calidad]', panel).textContent = `${$('[name=calidad]', panel).value} %`;
-      });
+        if (modo === 'fuerte' && doc) vista.programar(async () => {
+          const una = await M.rasterizar(doc.bytes, { ...opFuerte(), limite: 1 });
+          const est = una.length * doc.paginas;
+          return { blob: pdfBlob(una), nombre: 'previa.pdf', info: `Ahora ${tamano(doc.bytes.length)} → ≈ ${tamano(est)} (estimado)` };
+        });
+      };
+      panel.addEventListener('input', act);
       $('button.acento', panel).addEventListener('click', (e) => tarea(e.currentTarget, $('.progreso', panel), async (prog) => {
         const bytes = valorRadio(panel, 'modo') === 'ligera'
           ? await M.optimizar(doc.bytes, $('[name=meta]', panel).checked)
@@ -230,37 +242,11 @@ export const PDF = [
     },
   },
   {
-    id: 'texto', categoria: 'pdf', nombre: 'PDF a texto', icono: I.texto,
-    desc: 'Saca el texto del PDF para copiarlo o guardarlo como .txt.',
-    montar(el) {
-      let doc = null;
-      unPdf(el, (it) => { doc = it; panel.hidden = false; $('textarea', panel).hidden = true; $('.acciones-final', panel).hidden = true; });
-      const panel = html(el, `<div class="panel" hidden>
-        <button type="button" class="btn acento grande" data-a="sacar">Sacar el texto</button><div class="progreso"></div>
-        <textarea class="texto-salida" readonly hidden></textarea>
-        <div class="acciones-final" hidden><button type="button" class="btn" data-a="copiar">${I.copiar}Copiar</button><button type="button" class="btn" data-a="txt">${I.descargar}Descargar .txt</button></div>
-        <p class="ayuda">Si el PDF es un escaneo (una foto del papel), no tiene texto que sacar.</p></div>`);
-      panel.addEventListener('click', (e) => {
-        const a = e.target.closest('[data-a]')?.dataset.a;
-        const ta = $('textarea', panel);
-        if (a === 'sacar') tarea(e.target.closest('button'), $('.progreso', panel), async (prog) => {
-          const t = await M.extraerTexto(doc.bytes, prog);
-          ta.value = t; ta.hidden = false; $('.acciones-final', panel).hidden = false;
-          if (!t.replace(/--- Página \d+ ---/g, '').trim()) aviso('Este PDF no tiene texto: probablemente es un escaneo', { error: true });
-        });
-        if (a === 'copiar') navigator.clipboard.writeText(ta.value).then(() => aviso('Texto copiado'), () => { ta.select(); aviso('Selecciónalo y cópialo a mano', { error: true }); });
-        if (a === 'txt') descargar(new Blob([ta.value], { type: 'text/plain;charset=utf-8' }), `${base(doc.nombre)}.txt`);
-      });
-    },
-  },
-
-  // ------------------------------------------------------------------ Editar
-  {
     id: 'numerar', categoria: 'pdf', nombre: 'Numerar páginas', icono: I.numerar,
     desc: 'Añade el número de página donde quieras.',
     montar(el) {
-      let doc = null;
-      unPdf(el, (it) => { doc = it; panel.hidden = false; });
+      let doc = null, act = () => {};
+      unPdf(el, (it) => { doc = it; panel.hidden = false; act(); });
       const panel = html(el, `<div class="panel" hidden><div class="opciones-rejilla">
         <label class="campo">Posición <select name="posicion">
           <option value="abajo-centro">Abajo, centro</option><option value="abajo-derecha">Abajo, derecha</option><option value="abajo-izquierda">Abajo, izquierda</option>
@@ -271,13 +257,20 @@ export const PDF = [
         <label class="campo">Margen <select name="margen"><option value="18">Pequeño</option><option value="30" selected>Normal</option><option value="48">Grande</option></select></label>
         <label class="campo">Color <input type="color" name="color" value="#333333"></label>
         </div><label class="check"><input type="checkbox" name="saltar"> No numerar la primera página (portada)</label>
+        <div class="hueco-vista"></div>
         <button type="button" class="btn acento grande">Numerar</button><div class="progreso"></div></div>`);
-      panel.addEventListener('input', () => { $('[data-v=tamano]', panel).textContent = `${$('[name=tamano]', panel).value} pt`; });
+      const vista = new VistaPrevia($('.hueco-vista', panel));
+      const op = () => ({ posicion: $('[name=posicion]', panel).value, formato: $('[name=formato]', panel).value, inicio: Number($('[name=inicio]', panel).value) || 1,
+        tamano: Number($('[name=tamano]', panel).value), margen: Number($('[name=margen]', panel).value), color: $('[name=color]', panel).value, saltarPrimera: $('[name=saltar]', panel).checked });
+      const pagina = () => ($('[name=saltar]', panel).checked && doc.paginas > 1 ? 2 : 1);
+      act = () => {
+        $('[data-v=tamano]', panel).textContent = `${$('[name=tamano]', panel).value} pt`;
+        vista.programar(async () => ({ blob: pdfBlob(await M.numerar(doc.bytes, op())), nombre: 'previa.pdf', pagina: pagina(), info: 'Así quedará' }), 450);
+      };
+      panel.addEventListener('input', act);
       $('button.acento', panel).addEventListener('click', (e) => tarea(e.currentTarget, $('.progreso', panel), async () => {
-        const saltar = $('[name=saltar]', panel).checked;
-        const bytes = await M.numerar(doc.bytes, { posicion: $('[name=posicion]', panel).value, formato: $('[name=formato]', panel).value, inicio: Number($('[name=inicio]', panel).value) || 1,
-          tamano: Number($('[name=tamano]', panel).value), margen: Number($('[name=margen]', panel).value), color: $('[name=color]', panel).value, saltarPrimera: saltar });
-        await resultado(panel, { blob: pdfBlob(bytes), nombre: `${base(doc.nombre)}-numerado.pdf`, previa: { pagina: saltar && doc.paginas > 1 ? 2 : 1 } });
+        const bytes = await M.numerar(doc.bytes, op());
+        await resultado(panel, { ver: false, blob: pdfBlob(bytes), nombre: `${base(doc.nombre)}-numerado.pdf` });
       }));
     },
   },
@@ -285,8 +278,8 @@ export const PDF = [
     id: 'marca', categoria: 'pdf', nombre: 'Marca de agua', icono: I.marca,
     desc: 'Un texto como «CONFIDENCIAL» o «COPIA» encima de cada página.',
     montar(el) {
-      let doc = null;
-      unPdf(el, (it) => { doc = it; panel.hidden = false; });
+      let doc = null, act = () => {};
+      unPdf(el, (it) => { doc = it; panel.hidden = false; act(); });
       const panel = html(el, `<div class="panel" hidden>
         <label class="campo">Texto <input type="text" name="texto" value="CONFIDENCIAL" maxlength="80"></label>
         <div class="opciones-rejilla">
@@ -296,18 +289,25 @@ export const PDF = [
         <label class="campo">Ángulo <select name="angulo"><option value="45" selected>Diagonal ↗</option><option value="-45">Diagonal ↘</option><option value="0">Horizontal</option><option value="90">Vertical</option></select></label>
         <label class="campo">Color <input type="color" name="color" value="#b23a33"></label>
         </div><label class="check"><input type="checkbox" name="negrita" checked> Negrita</label>
+        <div class="hueco-vista"></div>
         <button type="button" class="btn acento grande">Poner marca de agua</button><div class="progreso"></div></div>`);
-      panel.addEventListener('input', () => {
-        $('[data-v=tamano]', panel).textContent = `${$('[name=tamano]', panel).value} pt`;
-        $('[data-v=opacidad]', panel).textContent = `${$('[name=opacidad]', panel).value} %`;
-      });
-      $('button.acento', panel).addEventListener('click', (e) => tarea(e.currentTarget, $('.progreso', panel), async () => {
+      const vista = new VistaPrevia($('.hueco-vista', panel));
+      const op = () => {
         const texto = $('[name=texto]', panel).value.trim();
         if (!texto) throw new Error('Escribe el texto de la marca de agua');
         if (/[^\x20-\x7e -ÿ€]/.test(texto)) throw new Error('El texto solo puede llevar letras latinas (sin emojis ni otros alfabetos)');
-        const bytes = await M.marcaAgua(doc.bytes, { texto, modo: valorRadio(panel, 'modo'), tamano: Number($('[name=tamano]', panel).value), opacidad: Number($('[name=opacidad]', panel).value) / 100,
-          angulo: Number($('[name=angulo]', panel).value), color: $('[name=color]', panel).value, negrita: $('[name=negrita]', panel).checked });
-        await resultado(panel, { blob: pdfBlob(bytes), nombre: `${base(doc.nombre)}-marca.pdf`, previa: { pagina: 1 } });
+        return { texto, modo: valorRadio(panel, 'modo'), tamano: Number($('[name=tamano]', panel).value), opacidad: Number($('[name=opacidad]', panel).value) / 100,
+          angulo: Number($('[name=angulo]', panel).value), color: $('[name=color]', panel).value, negrita: $('[name=negrita]', panel).checked };
+      };
+      act = () => {
+        $('[data-v=tamano]', panel).textContent = `${$('[name=tamano]', panel).value} pt`;
+        $('[data-v=opacidad]', panel).textContent = `${$('[name=opacidad]', panel).value} %`;
+        vista.programar(async () => ({ blob: pdfBlob(await M.marcaAgua(doc.bytes, op())), nombre: 'previa.pdf', info: 'Así quedará' }), 450);
+      };
+      panel.addEventListener('input', act);
+      $('button.acento', panel).addEventListener('click', (e) => tarea(e.currentTarget, $('.progreso', panel), async () => {
+        const bytes = await M.marcaAgua(doc.bytes, op());
+        await resultado(panel, { ver: false, blob: pdfBlob(bytes), nombre: `${base(doc.nombre)}-marca.pdf` });
       }));
     },
   },

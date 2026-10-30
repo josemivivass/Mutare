@@ -9,18 +9,15 @@ entrega la página (HTML, CSS, JS y las librerías), así que apenas gasta recur
 | Categoría | Herramienta | Qué hace |
 |-----------|-------------|----------|
 | PDF | Juntar PDF | Une varios PDF (y fotos) en el orden que quieras |
-| | Ordenar páginas | Mover, girar, quitar, añadir en blanco, mezclar varios PDF, sacar solo algunas |
+| | Ordenar y girar páginas | Mover, girar, quitar, añadir en blanco, mezclar varios PDF, sacar solo algunas |
 | | Separar PDF | Cada página, cada N páginas, por rangos o sacar unas páginas |
-| | Rotar PDF | Todas las páginas o solo las elegidas |
-| | Imágenes a PDF | JPG, PNG, WebP… (respeta la orientación de las fotos del móvil) |
-| | PDF a imágenes | PNG o JPG a 72, 150 o 300 ppp |
+| | Convertir PDF | A imágenes (JPG o PNG, 72/150/300 ppp) o a texto |
 | | Comprimir PDF | Ligera (sin pérdida) o fuerte (páginas a imagen, ideal para escaneos) |
-| | PDF a texto | Copiar o descargar como .txt |
 | | Numerar páginas | Posición, formato («Página 1 de 10»…), saltar portada |
 | | Marca de agua | Texto en el centro o repetido, con opacidad, ángulo y color |
 | | Firmar PDF | Dibujada o desde una imagen; se arrastra y redimensiona |
 | | Metadatos | Ver/cambiar título, autor… o borrarlos todos |
-| Imágenes | Convertir imágenes | JPG, PNG, WebP, GIF, BMP, ICO (multitamaño) y TIFF. Abre también HEIC/HEIF, AVIF y SVG |
+| Imágenes | Convertir imágenes | JPG, PNG, WebP, GIF, BMP, ICO (multitamaño), TIFF o PDF (todas en uno). Abre también HEIC/HEIF, AVIF y SVG |
 | | Cambiar tamaño | Por porcentaje, por medida máxima o exacta |
 | | Comprimir imágenes | JPG o WebP con calidad y medida máxima |
 | | Quitar datos ocultos | GPS, cámara, fecha… En JPG y PNG sin recomprimir |
@@ -36,6 +33,12 @@ entrega la página (HTML, CSS, JS y las librerías), así que apenas gasta recur
 | | JSON, YAML, TOML, XML y CSV | Entre sí, con validación |
 | ZIP | Crear un ZIP | Con o sin compresión |
 | | Abrir un ZIP | Ver el contenido, sacar archivos sueltos o extraerlo todo en una carpeta |
+
+Todas las herramientas enseñan el resultado antes de descargarlo. Las que tienen
+opciones lo hacen además en directo: la imagen con sus medidas y su peso reales, la
+página del PDF con el número o la marca de agua, la lista de archivos que saldrán…
+En audio y vídeo, «Probar con una muestra» convierte unos segundos con los ajustes
+elegidos y estima lo que ocupará el archivo entero.
 
 Funciona sin conexión una vez abierta (service worker) y se puede instalar como app
 en el móvil o el ordenador. Hay un buscador en la portada («heic», «mp3», «excel»…).

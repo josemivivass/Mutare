@@ -9,12 +9,12 @@ import { DATOS } from './herramientas/datos.js';
 import { ARCHIVOS } from './herramientas/archivos.js';
 
 const CATEGORIAS = [
-  { id: 'pdf', nombre: 'PDF', desc: 'Juntar, separar, ordenar, convertir, numerar, firmar…' },
-  { id: 'imagenes', nombre: 'Imágenes', desc: 'Cambiar de formato (también HEIC del iPhone), tamaño, peso y datos ocultos.' },
-  { id: 'multimedia', nombre: 'Audio y vídeo', desc: 'Convertir, comprimir, recortar y sacar el sonido.' },
-  { id: 'documentos', nombre: 'Documentos y texto', desc: 'Word, Markdown y textos con acentos estropeados.' },
-  { id: 'datos', nombre: 'Datos y hojas de cálculo', desc: 'Excel, CSV, JSON, YAML, TOML y XML.' },
-  { id: 'zip', nombre: 'Archivos ZIP', desc: 'Crear y abrir archivos comprimidos.' },
+  { id: 'pdf', nombre: 'PDF' },
+  { id: 'imagenes', nombre: 'Imágenes' },
+  { id: 'multimedia', nombre: 'Audio y vídeo' },
+  { id: 'documentos', nombre: 'Documentos y texto' },
+  { id: 'datos', nombre: 'Datos y hojas de cálculo' },
+  { id: 'zip', nombre: 'Archivos ZIP' },
 ];
 const HERRAMIENTAS = [...PDF, ...IMAGENES, ...MULTIMEDIA, ...DOCUMENTOS, ...DATOS, ...ARCHIVOS];
 const normal = (s) => String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -66,7 +66,7 @@ function inicio() {
   const tarjeta = (h) => `<a class="tarjeta-herr" href="#/${h.id}" data-buscar="${esc(normal(`${h.nombre} ${h.desc} ${h.palabras || ''}`))}"><span class="icono-herr">${h.icono}</span><b>${esc(h.nombre)}</b><span>${esc(h.desc)}</span></a>`;
   contenido.innerHTML = `
     <p class="privacidad">${I.candado}<span>Todo se hace en tu dispositivo: los archivos no se suben a ningún sitio, ni siquiera a este servidor. Puedes usarla sin conexión.</span></p>
-    ${CATEGORIAS.map((c) => `<section class="categoria"><h2 class="grupo-titulo">${esc(c.nombre)}</h2><p class="categoria-desc">${esc(c.desc)}</p>
+    ${CATEGORIAS.map((c) => `<section class="categoria"><h2 class="grupo-titulo">${esc(c.nombre)}</h2>
       <div class="herramientas">${HERRAMIENTAS.filter((h) => h.categoria === c.id).map(tarjeta).join('')}</div></section>`).join('')}
     <p class="sin-resultados" hidden>No hay ninguna herramienta con ese nombre.</p>`;
   filtrar();
@@ -86,7 +86,7 @@ function rutar() {
   try { limpiar?.(); } catch (e) { console.error(e); }
   limpiar = null;
   const id = location.hash.replace(/^#\/?/, '');
-  const h = HERRAMIENTAS.find((x) => x.id === id);
+  const h = HERRAMIENTAS.find((x) => x.id === id || x.alias?.includes(id));
   h ? herramienta(h) : inicio();
   window.scrollTo(0, 0);
 }
