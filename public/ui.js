@@ -16,10 +16,14 @@ export function zona({ acepta, multiple = true, titulo, subtitulo = 'o arrástra
   const el = document.createElement('label');
   el.className = 'zona' + (compacta ? ' compacta' : '');
   el.innerHTML = `${I.subir}<b>${esc(titulo)}</b><span>${esc(subtitulo)}</span>
-    <input type="file" accept="${acepta}" ${multiple ? 'multiple' : ''}>`;
+    <input type="file" ${acepta === '*' ? '' : `accept="${acepta}"`} ${multiple ? 'multiple' : ''}>`;
   const input = $('input', el);
-  const valido = (f) => (acepta.includes('pdf') && (f.type === 'application/pdf' || /\.pdf$/i.test(f.name)))
-    || (acepta.includes('image') && f.type.startsWith('image/'));
+  // acepta: lista como «application/pdf,.pdf,image/*,.heic» o «*» para cualquiera
+  const reglas = acepta.split(',').map((x) => x.trim().toLowerCase());
+  const valido = (f) => reglas.some((r) => r === '*'
+    || (r.startsWith('.') && f.name.toLowerCase().endsWith(r))
+    || (r.endsWith('/*') && f.type.startsWith(r.slice(0, -1)))
+    || r === f.type);
   const recibir = (lista) => {
     const todos = [...lista];
     const buenos = todos.filter(valido);
@@ -57,6 +61,9 @@ async function miniatura(it, caja) {
       const vp = p.getViewport({ scale: 1 });
       caja.appendChild(await dibujar(p, Math.min(120 / vp.width, 150 / vp.height)));
     } finally { v.destroy(); }
+  } else if (!/^image\/(png|jpe?g|webp|gif|avif|bmp|svg\+xml|x-icon|vnd\.microsoft\.icon)$/.test(it.mime)) {
+    // Sin vista previa: la extensión en grande
+    caja.innerHTML = `<span class="arch-ext">${esc((it.nombre.match(/\.([^.]{1,5})$/)?.[1] || '?').toUpperCase())}</span>`;
   } else {
     const img = new Image();
     img.src = URL.createObjectURL(new Blob([it.bytes], { type: it.mime }));
@@ -71,7 +78,8 @@ async function miniatura(it, caja) {
 // ---------------------------------------------------------------------------
 
 export class ListaArchivos {
-  constructor(contenedor, alCambiar = () => {}) {
+  constructor(contenedor, alCambiar = () => {}, { ordenable = true } = {}) {
+    this.ordenable = ordenable;
     this.el = document.createElement('div');
     this.el.className = 'lista-arch';
     contenedor.appendChild(this.el);
@@ -120,6 +128,8 @@ export class ListaArchivos {
           </div>`;
         miniatura(it, $('.arch-mini', n)).catch(() => {});
       }
+      $('[data-acc="-1"]', n).hidden = $('[data-acc="1"]', n).hidden = !this.ordenable;
+      n.draggable = this.ordenable;
       $('[data-acc="-1"]', n).disabled = k === 0;
       $('[data-acc="1"]', n).disabled = k === this.items.length - 1;
       return n;

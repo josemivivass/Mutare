@@ -4,14 +4,15 @@
 // Arranque: node server.js   →   http://localhost:9996
 // Variables de entorno opcionales: PORT, HOST
 //
-// Los PDF NUNCA llegan aquí: todo se procesa en el navegador. Este servidor
+// Tus archivos NUNCA llegan aquí: todo se procesa en el navegador. Este servidor
 // solo entrega la página y las librerías, y no acepta subidas (solo GET/HEAD).
 // La cabecera Content-Security-Policy impide además que la página se conecte
 // a cualquier otro sitio, así que los archivos no pueden salir del dispositivo.
 //
 // Pensado para gastar lo mínimo: sin estado, sin base de datos, archivos
 // leídos de disco y la versión comprimida de los de texto guardada en memoria
-// la primera vez que se pide (unos pocos MB en total).
+// la primera vez que se pide (unos pocos MB en total). Los archivos grandes
+// (ffmpeg pesa 32 MB) nunca se cargan enteros: se comprimen al vuelo, en flujo.
 
 const http = require('http');
 const fs = require('fs');
@@ -43,6 +44,7 @@ const TIPOS = {
 };
 // Se comprimen al vuelo (y se guardan comprimidos en memoria) solo estos
 const COMPRIMIBLES = new Set(['.html', '.css', '.js', '.mjs', '.json', '.webmanifest', '.svg', '.ttf', '.pfb', '.wasm', '.txt']);
+const MAX_EN_MEMORIA = 2 * 1024 * 1024; // por encima, gzip en flujo y sin guardar
 
 const CSP = [
   "default-src 'self'",
@@ -50,12 +52,26 @@ const CSP = [
   "worker-src 'self' blob:",
   "connect-src 'self'",
   "img-src 'self' blob: data:",
+  "media-src 'self' blob:",
   "style-src 'self' 'unsafe-inline'",
   "font-src 'self' data:",
   "object-src 'none'",
   "base-uri 'none'",
   "form-action 'none'",
   "frame-ancestors 'none'",
+].join('; ');
+
+// Página aislada para las librerías que necesitan eval (heic2any, mammoth):
+// puede evaluar código, pero no puede conectarse a nada ni cargar nada de fuera.
+const CSP_AISLADA = [
+  "default-src 'none'",
+  "script-src 'self' 'unsafe-eval'",
+  "worker-src blob:",
+  "img-src blob: data:",
+  "connect-src 'none'",
+  "base-uri 'none'",
+  "form-action 'none'",
+  "frame-ancestors 'self'",
 ].join('; ');
 
 const CABECERAS_COMUNES = {
@@ -104,12 +120,18 @@ const servidor = http.createServer((req, res) => {
       ETag: etag,
       ...CABECERAS_COMUNES,
     };
+    if (rel === '/aislado.html') cab['Content-Security-Policy'] = CSP_AISLADA;
     if (req.headers['if-none-match'] === etag) { res.writeHead(304, cab); return res.end(); }
 
     const aceptaGzip = /\bgzip\b/.test(req.headers['accept-encoding'] || '');
     if (COMPRIMIBLES.has(ext) && aceptaGzip && st.size > 1024) {
       cab['Content-Encoding'] = 'gzip';
       cab.Vary = 'Accept-Encoding';
+      if (st.size > MAX_EN_MEMORIA) {
+        res.writeHead(200, cab);
+        if (req.method === 'HEAD') return res.end();
+        return fs.createReadStream(file).pipe(zlib.createGzip({ level: 6 })).pipe(res);
+      }
       const enCache = comprimidos.get(file);
       if (enCache && enCache.etag === etag) {
         res.writeHead(200, { ...cab, 'Content-Length': enCache.gz.length });
@@ -134,7 +156,7 @@ const servidor = http.createServer((req, res) => {
 
 servidor.keepAliveTimeout = 5000;
 servidor.listen(PORT, HOST, () => {
-  console.log(`Mutare en http://localhost:${PORT}  (los PDF se procesan en el navegador; aquí no llega ninguno)`);
+  console.log(`Mutare en http://localhost:${PORT}  (los archivos se procesan en el navegador; aquí no llega ninguno)`);
 });
 
 for (const senal of ['SIGTERM', 'SIGINT']) process.on(senal, () => servidor.close(() => process.exit(0)));
