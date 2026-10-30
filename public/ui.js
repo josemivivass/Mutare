@@ -293,35 +293,116 @@ export class RejillaPaginas {
 // Resultado: descarga y vista previa opcional de una página
 // ---------------------------------------------------------------------------
 
-export async function resultado(contenedor, { blob, nombre, detalle = '', auto = true, previa = null }) {
+export async function resultado(contenedor, { blob, nombre, detalle = '', auto = false, previa = null, ver = true }) {
   $('.resultado', contenedor)?.remove();
   const div = document.createElement('div');
   div.className = 'resultado';
   div.innerHTML = `${I.ok}<div class="res-texto"><b>${esc(nombre)}</b><small>${esc(detalle || tamano(blob.size))}</small></div>
     <div class="acciones-final">
       <button type="button" class="btn acento" data-r="bajar">${I.descargar}Descargar</button>
-    </div>`;
-  div.addEventListener('click', (e) => {
-    const b = e.target.closest('[data-r]'); if (!b) return;
-    descargar(blob, nombre);
-  });
+    </div><div class="res-previa"></div>`;
+  $('[data-r=bajar]', div).addEventListener('click', () => descargar(blob, nombre));
   contenedor.appendChild(div);
   if (auto) descargar(blob, nombre);
-  if (previa) {
-    const caja = document.createElement('div');
-    caja.style.cssText = 'flex-basis:100%;display:flex;justify-content:center;padding-top:6px';
-    div.appendChild(caja);
-    const v = await abrirVista(new Uint8Array(await blob.arrayBuffer()));
-    try {
-      const p = await v.getPage(Math.min(previa.pagina || 1, v.numPages));
-      const vp = p.getViewport({ scale: 1 });
-      const c = await dibujar(p, Math.min(2, devicePixelRatio || 1) * Math.min(1, 420 / vp.width));
-      c.style.cssText = 'max-width:100%;height:auto;box-shadow:0 1px 4px rgba(0,0,0,.2)';
-      c.style.width = Math.min(420, vp.width) + 'px';
-      caja.appendChild(c);
-    } finally { v.destroy(); }
-  }
+  if (ver) { try { await verArchivo($('.res-previa', div), blob, nombre, previa?.pagina || 1); } catch (e) { console.warn(e); } }
   div.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// ---------------------------------------------------------------------------
+// Ver un archivo dentro de la página: imagen, PDF (con paso de páginas),
+// audio, vídeo, texto o contenido de un ZIP
+// ---------------------------------------------------------------------------
+const urlsVivas = new WeakMap();
+function urlPara(caja, blob) {
+  const vieja = urlsVivas.get(caja); if (vieja) URL.revokeObjectURL(vieja);
+  const u = URL.createObjectURL(blob); urlsVivas.set(caja, u); return u;
+}
+export async function verArchivo(caja, blob, nombre = '', pagina = 1) {
+  const tipo = blob.type || '';
+  const ext = (nombre.match(/\.([^.]+)$/)?.[1] || '').toLowerCase();
+  if (tipo.startsWith('image/') && !/tiff/.test(tipo)) {
+    caja.innerHTML = `<div class="vp-imagen"><img alt="Vista previa" title="Toca para verla a tamaño real"></div>`;
+    const img = $('img', caja); img.src = urlPara(caja, blob);
+    img.addEventListener('click', () => img.parentElement.classList.toggle('real'));
+    return;
+  }
+  if (tipo.startsWith('audio/') || /^(mp3|m4a|ogg|opus|wav|flac|mka)$/.test(ext)) {
+    caja.innerHTML = '<audio class="reproductor" controls preload="metadata"></audio>';
+    $('audio', caja).src = urlPara(caja, blob); return;
+  }
+  if (tipo.startsWith('video/') || /^(mp4|webm|mov|mkv)$/.test(ext)) {
+    caja.innerHTML = '<video class="reproductor" controls preload="metadata" playsinline></video>';
+    $('video', caja).src = urlPara(caja, blob); return;
+  }
+  if (tipo === 'application/pdf') return verPdf(caja, new Uint8Array(await blob.arrayBuffer()), pagina);
+  if (tipo === 'application/zip' || ext === 'zip') {
+    const { leerZip } = await import('./zip.js');
+    const ents = leerZip(new Uint8Array(await blob.arrayBuffer())).filter((e) => !e.carpeta);
+    caja.innerHTML = `<ul class="entradas-zip">${ents.slice(0, 200).map((e) => `<li><span>${I.archivo}</span><span class="ruta">${esc(e.nombre)}</span><small>${tamano(e.tam)}</small><span></span></li>`).join('')}</ul>`;
+    return;
+  }
+  if (/^text\/|json|xml|csv/.test(tipo) || /^(txt|csv|json|xml|yaml|yml|toml|md|html|srt|vtt)$/.test(ext)) {
+    const t = await blob.slice(0, 20000).text();
+    caja.innerHTML = '<pre class="vp-texto"></pre>';
+    $('pre', caja).textContent = t.replace(/^﻿/, '') + (blob.size > 20000 ? '\n…' : '');
+  }
+}
+
+// PDF con flechas para pasar de página
+export async function verPdf(caja, bytes, pagina = 1) {
+  const v = await abrirVista(bytes);
+  let n = Math.min(Math.max(1, pagina), v.numPages);
+  caja.innerHTML = `<div class="vp-pdf"><div class="nav-pag"><button type="button" class="btn-icono" data-p="-1" aria-label="Página anterior">${I.izquierda}</button><span></span><button type="button" class="btn-icono" data-p="1" aria-label="Página siguiente">${I.derecha}</button></div><div class="vp-lienzo"></div></div>`;
+  const pintar = async () => {
+    const p = await v.getPage(n);
+    const vp = p.getViewport({ scale: 1 });
+    const ancho = Math.min(caja.clientWidth || 600, 640);
+    const c = await dibujar(p, (Math.min(2, devicePixelRatio || 1) * ancho) / Math.max(vp.width, vp.height * 0.75));
+    p.cleanup();
+    c.style.maxWidth = '100%'; c.style.height = 'auto';
+    $('.vp-lienzo', caja).replaceChildren(c);
+    $('.nav-pag span', caja).textContent = `Página ${n} de ${v.numPages}`;
+    $('[data-p="-1"]', caja).disabled = n <= 1; $('[data-p="1"]', caja).disabled = n >= v.numPages;
+  };
+  caja.querySelector('.nav-pag').addEventListener('click', (e) => { const b = e.target.closest('[data-p]'); if (!b) return; n += Number(b.dataset.p); pintar(); });
+  await pintar();
+  // Se libera al quitar la vista de la página
+  const obs = new MutationObserver(() => { if (!caja.isConnected || !caja.contains(caja.querySelector('.vp-pdf'))) { obs.disconnect(); v.destroy(); } });
+  obs.observe(document.body, { childList: true, subtree: true });
+}
+
+// ---------------------------------------------------------------------------
+// Vista previa en directo: se recalcula (con un pequeño retraso) cada vez que
+// cambia una opción. Si llega un cambio nuevo, el cálculo anterior se descarta.
+// fn() devuelve { blob, nombre, pagina, info } o { nodo, info } o null
+// ---------------------------------------------------------------------------
+export class VistaPrevia {
+  constructor(contenedor, titulo = 'Vista previa') {
+    this.el = document.createElement('div');
+    this.el.className = 'vista-previa';
+    this.el.innerHTML = `<div class="vp-cab"><b>${esc(titulo)}</b><span class="vp-info"></span></div><div class="vp-cuerpo"></div>`;
+    contenedor.appendChild(this.el);
+    this.turno = 0; this.t = null;
+  }
+  set info(t) { $('.vp-info', this.el).textContent = t; }
+  programar(fn, espera = 350) {
+    clearTimeout(this.t);
+    const turno = ++this.turno;
+    this.el.classList.add('actualizando');
+    this.t = setTimeout(async () => {
+      try {
+        const r = await fn();
+        if (turno !== this.turno) return;
+        const cuerpo = $('.vp-cuerpo', this.el);
+        if (!r) { cuerpo.replaceChildren(); this.info = ''; }
+        else if (r.nodo) cuerpo.replaceChildren(r.nodo);
+        else if (r.blob) await verArchivo(cuerpo, r.blob, r.nombre || '', r.pagina || 1);
+        if (turno === this.turno && r) this.info = r.info || '';
+      } catch (e) {
+        if (turno === this.turno) { $('.vp-cuerpo', this.el).replaceChildren(); this.info = e.message || String(e); }
+      } finally { if (turno === this.turno) this.el.classList.remove('actualizando'); }
+    }, espera);
+  }
 }
 
 // Botón ocupado mientras dura una tarea, con mensajes de progreso

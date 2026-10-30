@@ -1,7 +1,7 @@
 // Herramientas de datos y hojas de cálculo.
 import { $, $$, aviso, tamano, base, esc, descargar } from '../util.js';
 import { I } from '../iconos.js';
-import { zona, tarea, resultado } from '../ui.js';
+import { zona, tarea, resultado, VistaPrevia } from '../ui.js';
 import { html, radios, valorRadio, unArchivo, conExtension } from './comun.js';
 import * as DA from '../motor-datos.js';
 import { crearZip } from '../zip.js';
@@ -28,12 +28,18 @@ export const DATOS = [
         <p class="ayuda" data-si="csv">Excel en español usa punto y coma y la coma para los decimales; en inglés, coma y punto.</p>
         <label class="check" data-si="csv"><input type="checkbox" name="bom" checked> Que Excel reconozca los acentos (UTF-8 con BOM)</label>
         <label class="check" data-si="todas"><input type="checkbox" name="todas"> Todas las hojas (un archivo por hoja, en un ZIP)</label>
-        <div class="tabla-previa"></div><p class="ayuda info"></p>
+        <div class="tabla-previa"></div><p class="ayuda info"></p><div class="hueco-vista"></div>
         <button type="button" class="btn acento grande">Convertir</button><div class="progreso"></div></div>`);
+      const vista = new VistaPrevia($('.hueco-vista', panel), 'Así quedará el archivo');
       const act = () => {
-        const f = $('[name=formato]', panel).value, una = DA.SALIDAS_HOJA[f].unaHoja;
+        const f = $('[name=formato]', panel).value, S = DA.SALIDAS_HOJA[f], una = S.unaHoja;
         $$('[data-si=csv]', panel).forEach((x) => { x.hidden = f !== 'csv'; });
         $('[data-si=todas]', panel).hidden = !una || !wb || wb.SheetNames.length < 2;
+        vista.el.hidden = !una;
+        if (una && wb) vista.programar(async () => {
+          const datos = await DA.guardarLibro(wb, f, { hoja: $('[name=hoja]', panel).value, separador: $('[name=sep]', panel).value, bom: $('[name=bom]', panel).checked });
+          return { blob: new Blob([datos.subarray(0, 20000)], { type: 'text/plain' }), nombre: `x.${S.ext}`, info: `${S.nombre} · ${tamano(datos.length)}` };
+        }, 250);
       };
       async function previa() {
         const hoja = $('[name=hoja]', panel).value;
@@ -42,7 +48,7 @@ export const DATOS = [
         $('.tabla-previa', panel).innerHTML = filas.length ? `<table>${filas.map((f, k) => `<tr>${Array.from({ length: ancho }, (_, c) => `<${k ? 'td' : 'th'}>${esc(f[c] ?? '')}</${k ? 'td' : 'th'}>`).join('')}</tr>`).join('')}</table>` : '<p class="ayuda" style="padding:10px">La hoja está vacía</p>';
         $('.info', panel).textContent = `${total} fila${total === 1 ? '' : 's'}${total > filas.length ? ` (se ven las ${filas.length} primeras)` : ''}`;
       }
-      panel.addEventListener('change', (e) => { act(); if (e.target.name === 'hoja') previa(); });
+      panel.addEventListener('input', (e) => { act(); if (e.target.name === 'hoja') previa(); });
       $('button.acento', panel).addEventListener('click', (e) => tarea(e.currentTarget, $('.progreso', panel), async () => {
         const f = $('[name=formato]', panel).value, S = DA.SALIDAS_HOJA[f];
         const op = { hoja: $('[name=hoja]', panel).value, separador: $('[name=sep]', panel).value, bom: $('[name=bom]', panel).checked };

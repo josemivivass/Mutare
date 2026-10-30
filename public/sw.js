@@ -8,7 +8,7 @@
 //   (ffmpeg, 32 MB, solo si usas audio o vídeo).
 // Tus archivos nunca pasan por aquí: se procesan en la página y no salen del navegador.
 
-const CACHE = 'mutare-v2';
+const CACHE = 'mutare-v3';
 const INTERFAZ = [
   '/', '/index.html', '/styles.css', '/tema.js', '/app.js', '/ui.js', '/util.js', '/iconos.js', '/zip.js',
   '/motor.js', '/motor-imagen.js', '/motor-ffmpeg.js', '/motor-datos.js', '/motor-documentos.js',

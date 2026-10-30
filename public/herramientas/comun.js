@@ -35,11 +35,11 @@ export const conExtension = (nombre, ext) => `${String(nombre).replace(/\.[^.]+$
 // archivos: [{ nombre, datos: Uint8Array, mime }]
 import { resultado } from '../ui.js';
 import { crearZip } from '../zip.js';
-export async function entregar(panel, archivos, nombreZip, detalle = '') {
+export async function entregar(panel, archivos, nombreZip, detalle = '', ver = true) {
   if (archivos.length === 1) {
     const [a] = archivos;
-    return resultado(panel, { blob: new Blob([a.datos], { type: a.mime || 'application/octet-stream' }), nombre: a.nombre, detalle });
+    return resultado(panel, { ver, blob: new Blob([a.datos], { type: a.mimeReal || a.mime || 'application/octet-stream' }), nombre: a.nombre, detalle });
   }
   const zip = crearZip(archivos.map((a) => ({ nombre: a.nombre, datos: a.datos })));
-  return resultado(panel, { blob: zip, nombre: nombreZip, detalle: detalle || `${archivos.length} archivos · ${tamano(zip.size)}` });
+  return resultado(panel, { ver, blob: zip, nombre: nombreZip, detalle: detalle || `${archivos.length} archivos · ${tamano(zip.size)}` });
 }

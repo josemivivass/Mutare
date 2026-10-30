@@ -350,7 +350,7 @@ export async function dibujar(pagina, escala, canvas = document.createElement('c
 const aBlob = (canvas, tipo, calidad) => new Promise((r) => canvas.toBlob(r, tipo, calidad));
 
 // Cada página a PNG o JPG
-export async function aImagenes(bytes, { formato, ppp, indices, nombre }, progreso = () => {}) {
+export async function aImagenes(bytes, { formato, ppp, indices, nombre, calidad = 0.9 }, progreso = () => {}) {
   const vista = await abrirVista(bytes);
   const salida = [];
   try {
@@ -360,7 +360,7 @@ export async function aImagenes(bytes, { formato, ppp, indices, nombre }, progre
       progreso(`Página ${k + 1} de ${lista.length}`);
       const pag = await vista.getPage(i + 1);
       const c = await dibujar(pag, ppp / 72);
-      const blob = await aBlob(c, formato === 'png' ? 'image/png' : 'image/jpeg', 0.9);
+      const blob = await aBlob(c, formato === 'png' ? 'image/png' : 'image/jpeg', calidad);
       c.width = c.height = 0; pag.cleanup();
       salida.push({ nombre: `${nombre}-${String(i + 1).padStart(ancho, '0')}.${formato}`, datos: new Uint8Array(await blob.arrayBuffer()) });
     }
@@ -370,11 +370,11 @@ export async function aImagenes(bytes, { formato, ppp, indices, nombre }, progre
 
 // Compresión fuerte: cada página se convierte en una imagen JPEG. Reduce mucho
 // los escaneos y documentos con fotos, pero el texto deja de ser seleccionable.
-export async function rasterizar(bytes, { ppp, calidad, gris }, progreso = () => {}) {
+export async function rasterizar(bytes, { ppp, calidad, gris, limite = Infinity }, progreso = () => {}) {
   const vista = await abrirVista(bytes);
   const doc = await nuevo();
   try {
-    for (let i = 1; i <= vista.numPages; i++) {
+    for (let i = 1; i <= Math.min(vista.numPages, limite); i++) {
       progreso(`Página ${i} de ${vista.numPages}`);
       const pag = await vista.getPage(i);
       const tam = pag.getViewport({ scale: 1 });

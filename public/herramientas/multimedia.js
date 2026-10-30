@@ -1,7 +1,7 @@
 // Herramientas de audio y vídeo (ffmpeg en el navegador).
 import { $, $$, aviso, tamano, base, esc } from '../util.js';
 import { I } from '../iconos.js';
-import { zona, prepararArchivos, ListaArchivos, tarea, resultado } from '../ui.js';
+import { zona, prepararArchivos, ListaArchivos, tarea, resultado, VistaPrevia } from '../ui.js';
 import { html, radios, valorRadio, unArchivo, entregar, conExtension } from './comun.js';
 import { ffmpeg, ejecutar, analizar } from '../motor-ffmpeg.js';
 
@@ -66,6 +66,30 @@ function aTiempo(s) {
   return `${h ? `${h}:` : ''}${String(m).padStart(h ? 2 : 1, '0')}:${x}`;
 }
 
+// Muestra de unos segundos con los ajustes actuales, para oír/ver cómo queda
+// y estimar el peso. Tras la primera, se rehace sola al cambiar una opción.
+function muestra(panel, { segundos, generar }) {
+  const caja = document.createElement('div');
+  caja.innerHTML = `<button type="button" class="btn" data-a="muestra">Probar con una muestra de ${segundos} s</button>`;
+  $('.hueco-vista', panel).appendChild(caja);
+  const vista = new VistaPrevia($('.hueco-vista', panel), `Muestra (${segundos} s)`);
+  vista.el.hidden = true;
+  let activa = false;
+  const duraciones = new Map();
+  const duracionDe = async (it) => { if (!duraciones.has(it.id)) duraciones.set(it.id, (await analizar(`d.${extDe(it.nombre) || 'bin'}`, it.bytes)).duracion); return duraciones.get(it.id); };
+  const lanzar = () => {
+    activa = true; vista.el.hidden = false;
+    vista.programar(async () => {
+      await ffmpeg(({ cargando }) => { vista.info = `Descargando el conversor (solo la primera vez)… ${Math.round(cargando * 100)} %`; });
+      return generar({ segundos, duracionDe });
+    }, 600);
+  };
+  $('[data-a=muestra]', caja).addEventListener('click', lanzar);
+  panel.addEventListener('change', () => { if (activa) lanzar(); });
+  return { reiniciar: () => { activa = false; vista.el.hidden = true; } };
+}
+const estimado = (bytesMuestra, segMuestra, total) => (total ? ` · ≈ ${tamano(bytesMuestra * total / Math.min(segMuestra, total))} el archivo entero` : '');
+
 export const MULTIMEDIA = [
   {
     id: 'av-audio', categoria: 'multimedia', nombre: 'Convertir audio', icono: I.audio,
@@ -76,15 +100,22 @@ export const MULTIMEDIA = [
       const lista = new ListaArchivos(el, (items) => { panel.hidden = !items.length; }, { ordenable: false });
       const panel = html(el, `<div class="panel" hidden><div class="opciones-rejilla">${selectorAudio('mp3')}
         <label class="campo">Canales <select name="canales"><option value="">Como el original</option><option value="1">Mono</option><option value="2">Estéreo</option></select></label></div>
+        <div class="hueco-vista"></div>
         ${AYUDA}<button type="button" class="btn acento grande">Convertir</button><div class="progreso"></div></div>`);
       enlazarBitrate(panel);
+      const argsAudio = () => { const f = $('[name=formato]', panel).value, c = $('[name=canales]', panel).value; return [...(c ? ['-ac', c] : []), ...AUDIO[f].args(Number($('[name=br]', panel).value))]; };
+      muestra(panel, { segundos: 10, generar: async ({ segundos, duracionDe }) => {
+        const it = lista.items[0], f = $('[name=formato]', panel).value, en = entrada(it);
+        const datos = await ejecutar({ entradas: [en], args: ['-i', en.nombre, '-t', String(segundos), '-vn', ...argsAudio()], salida: `muestra.${f}` });
+        return { blob: new Blob([datos], { type: AUDIO[f].mime }), nombre: `muestra.${f}`, info: `${it.nombre}: ${tamano(datos.length)} en ${segundos} s${estimado(datos.length, segundos, await duracionDe(it))}` };
+      } });
       $('button.acento', panel).addEventListener('click', (e) => tarea(e.currentTarget, $('.progreso', panel), async (prog) => {
         await motor(prog);
         const f = $('[name=formato]', panel).value, br = Number($('[name=br]', panel).value), canales = $('[name=canales]', panel).value;
         const salida = [];
         for (const [k, it] of lista.items.entries()) {
           const en = entrada(it);
-          const datos = await ejecutar({ entradas: [en], args: ['-i', en.nombre, '-vn', '-map_metadata', '0', ...(canales ? ['-ac', canales] : []), ...AUDIO[f].args(br)], salida: `salida.${f}`, progreso: pct(prog, `${k + 1}/${lista.items.length} · ${it.nombre}:`) });
+          const datos = await ejecutar({ entradas: [en], args: ['-i', en.nombre, '-vn', '-map_metadata', '0', ...argsAudio()], salida: `salida.${f}`, progreso: pct(prog, `${k + 1}/${lista.items.length} · ${it.nombre}:`) });
           salida.push({ nombre: conExtension(it.nombre, f), datos, mime: AUDIO[f].mime });
         }
         await entregar(panel, salida, `audios-${f}.zip`);
@@ -107,16 +138,27 @@ export const MULTIMEDIA = [
         <p class="ayuda" data-no="gif">Calidad media: casi igual y ocupa bastante menos. Baja: ocupa muy poco, para enviar por mensajería.</p>
         <label class="check" data-no="gif"><input type="checkbox" name="sinAudio"> Quitar el sonido</label>
         <label class="check" data-no="gif"><input type="checkbox" name="copiar"> Rápido: solo cambiar el formato, sin recomprimir (si los códecs lo permiten; ignora calidad y resolución)</label>
+        <div class="hueco-vista"></div>
         ${AYUDA}<button type="button" class="btn acento grande">Convertir</button><div class="progreso"></div></div>`);
       const act = () => { const g = $('[name=formato]', panel).value === 'gif'; $$('[data-no=gif]', panel).forEach((x) => { x.hidden = g; }); $$('[data-si=gif]', panel).forEach((x) => { x.hidden = !g; }); };
       panel.addEventListener('change', act); act();
-      $('button.acento', panel).addEventListener('click', (e) => tarea(e.currentTarget, $('.progreso', panel), async (prog) => {
-        await motor(prog);
-        const f = $('[name=formato]', panel).value, en = entrada(it);
+      const argsDe = (f) => {
         const copiar = f !== 'gif' && $('[name=copiar]', panel).checked;
         const args = copiar ? ['-c', 'copy', ...(f === 'mp4' || f === 'mov' ? ['-movflags', '+faststart'] : [])]
           : argsVideo(f, { calidad: $('[name=calidad]', panel).value, altura: Number($('[name=altura]', panel).value) || 0, sinAudio: $('[name=sinAudio]', panel).checked, fps: Number($('[name=fps]', panel).value) });
-        const datos = await ejecutar({ entradas: [en], args: ['-i', en.nombre, ...(copiar && $('[name=sinAudio]', panel).checked ? ['-an'] : []), ...args], salida: `salida.${f}`, progreso: pct(prog, 'Convirtiendo…') });
+        return [...(copiar && $('[name=sinAudio]', panel).checked ? ['-an'] : []), ...args];
+      };
+      muestra(panel, { segundos: 5, generar: async ({ segundos, duracionDe }) => {
+        const f = $('[name=formato]', panel).value, en = entrada(it);
+        const datos = await ejecutar({ entradas: [en], args: ['-i', en.nombre, '-t', String(segundos), ...argsDe(f)], salida: `muestra.${f}` });
+        let dims = '';
+        if (f === 'gif') { const b = await createImageBitmap(new Blob([datos], { type: 'image/gif' })); dims = `${b.width}×${b.height} · `; b.close(); }
+        return { blob: new Blob([datos], { type: VIDEO[f].mime }), nombre: `muestra.${f}`, info: `${dims}${tamano(datos.length)} en ${segundos} s${estimado(datos.length, segundos, await duracionDe(it))}` };
+      } });
+      $('button.acento', panel).addEventListener('click', (e) => tarea(e.currentTarget, $('.progreso', panel), async (prog) => {
+        await motor(prog);
+        const f = $('[name=formato]', panel).value, en = entrada(it);
+        const datos = await ejecutar({ entradas: [en], args: ['-i', en.nombre, ...argsDe(f)], salida: `salida.${f}`, progreso: pct(prog, 'Convirtiendo…') });
         await resultado(panel, { blob: new Blob([datos], { type: VIDEO[f].mime }), nombre: conExtension(it.nombre, f), detalle: `${tamano(it.tam)} → ${tamano(datos.length)}` });
       }));
     },
@@ -132,11 +174,11 @@ export const MULTIMEDIA = [
         <label class="campo">Formato <select name="formato"><option value="original">Original, sin recomprimir</option>${Object.entries(AUDIO).map(([k, f]) => `<option value="${k}" ${k === 'mp3' ? 'selected' : ''}>${f.nombre}</option>`).join('')}</select></label>
         <label class="campo" data-si="br">Calidad <select name="br"><option value="128">128 kbps</option><option value="192" selected>192 kbps</option><option value="320">320 kbps</option></select></label></div>
         <p class="ayuda">«Original» guarda el sonido tal como viene dentro del vídeo: es lo más rápido y no pierde nada de calidad.</p>
+        <div class="hueco-vista"></div>
         ${AYUDA}<button type="button" class="btn acento grande">Sacar el audio</button><div class="progreso"></div></div>`);
       const act = () => { const f = $('[name=formato]', panel).value; $('[data-si=br]', panel).hidden = f === 'original' || !!AUDIO[f]?.sinBitrate; };
       panel.addEventListener('change', act); act();
-      $('button.acento', panel).addEventListener('click', (e) => tarea(e.currentTarget, $('.progreso', panel), async (prog) => {
-        await motor(prog);
+      const preparar = async () => {
         let f = $('[name=formato]', panel).value;
         const en = entrada(it);
         let args;
@@ -146,6 +188,16 @@ export const MULTIMEDIA = [
           f = { aac: 'm4a', mp3: 'mp3', opus: 'opus', vorbis: 'ogg', flac: 'flac', alac: 'm4a' }[audio] || 'mka';
           args = ['-c:a', 'copy'];
         } else args = AUDIO[f].args(Number($('[name=br]', panel).value));
+        return { f, en, args };
+      };
+      muestra(panel, { segundos: 10, generar: async ({ segundos, duracionDe }) => {
+        const { f, en, args } = await preparar();
+        const datos = await ejecutar({ entradas: [en], args: ['-i', en.nombre, '-t', String(segundos), '-vn', ...args], salida: `muestra.${f}` });
+        return { blob: new Blob([datos], { type: AUDIO[f]?.mime || 'audio/x-matroska' }), nombre: `muestra.${f}`, info: `${tamano(datos.length)} en ${segundos} s${estimado(datos.length, segundos, await duracionDe(it))}` };
+      } });
+      $('button.acento', panel).addEventListener('click', (e) => tarea(e.currentTarget, $('.progreso', panel), async (prog) => {
+        await motor(prog);
+        const { f, en, args } = await preparar();
         const datos = await ejecutar({ entradas: [en], args: ['-i', en.nombre, '-vn', ...args], salida: `salida.${f}`, progreso: pct(prog, 'Sacando el audio…') });
         await resultado(panel, { blob: new Blob([datos], { type: AUDIO[f]?.mime || 'audio/x-matroska' }), nombre: conExtension(it.nombre, f), detalle: tamano(datos.length) });
       }));
@@ -172,13 +224,23 @@ export const MULTIMEDIA = [
           <label class="campo">Empieza en <input type="text" name="ini" inputmode="decimal" placeholder="0:00.0"></label>
           <label class="campo">Acaba en <input type="text" name="fin" inputmode="decimal" placeholder="1:30.0"></label>
         </div>
-        <div class="fila"><button type="button" class="btn pequeno" data-a="ini">Empezar aquí</button><button type="button" class="btn pequeno" data-a="fin">Acabar aquí</button><span class="ayuda">(toman el punto donde está el reproductor)</span></div>
+        <div class="fila"><button type="button" class="btn pequeno" data-a="ini">Empezar aquí</button><button type="button" class="btn pequeno" data-a="fin">Acabar aquí</button><button type="button" class="btn pequeno" data-a="escuchar">▶ Reproducir el trozo</button><span class="ayuda">(los dos primeros toman el punto donde está el reproductor)</span></div>
         <div class="campo" style="margin-top:12px">Modo ${radios('modo', [['rapido', 'Rápido, sin perder calidad'], ['exacto', 'Exacto al décimo de segundo']], 'rapido')}</div>
         <p class="ayuda">El modo rápido corta en el fotograma clave más cercano (puede desviarse un par de segundos en vídeo). El exacto vuelve a comprimir, así que tarda más.</p>
         ${AYUDA}<button type="button" class="btn acento grande">Recortar</button><div class="progreso"></div></div>`);
+      let parar = null;
       panel.addEventListener('click', (e) => {
         const a = e.target.closest('[data-a]')?.dataset.a; if (!a) return;
-        const m = $('.reproductor', panel); if (m) $(`[name=${a}]`, panel).value = aTiempo(m.currentTime);
+        const m = $('.hueco-rep .reproductor', panel); if (!m) return;
+        if (a === 'ini' || a === 'fin') { $(`[name=${a}]`, panel).value = aTiempo(m.currentTime); return; }
+        if (a === 'escuchar') {
+          const ini = aSegundos($('[name=ini]', panel).value || 0), fin = aSegundos($('[name=fin]', panel).value);
+          if (isNaN(ini) || isNaN(fin) || fin <= ini) return aviso('Revisa los tiempos: el final tiene que ir después del principio', { error: true });
+          // Se vigila en cada fotograma (timeupdate solo avisa cada ~250 ms)
+          const turno = (parar = {});
+          const vigilar = () => { if (parar !== turno) return; if (m.currentTime >= fin) { m.pause(); return; } if (!m.paused) requestAnimationFrame(vigilar); };
+          m.currentTime = ini; m.play().then(() => requestAnimationFrame(vigilar));
+        }
       });
       $('button.acento', panel).addEventListener('click', (e) => tarea(e.currentTarget, $('.progreso', panel), async (prog) => {
         const ini = aSegundos($('[name=ini]', panel).value || 0), fin = aSegundos($('[name=fin]', panel).value);
