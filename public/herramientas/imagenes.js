@@ -82,7 +82,7 @@ export const IMAGENES = [
     palabras: 'redimensionar reducir escalar pixeles resolucion ancho alto',
     montar(el) {
       const { lista, panel } = lote(el, 'Elige las imágenes', `
-        <div class="campo">Cómo ${radios('modo', [['maximo', 'Que no pase de…'], ['porcentaje', 'Porcentaje'], ['exacto', 'Medidas exactas']], 'maximo')}</div>
+        <div class="campo">Cómo ${radios('modo', [['maximo', 'Tamaño máximo'], ['porcentaje', 'Porcentaje'], ['exacto', 'Medidas exactas']], 'maximo')}</div>
         <div class="opciones-rejilla">
           <label class="campo" data-m="porcentaje" hidden>Porcentaje <span class="valor" data-v="pct">50 %</span><input type="range" name="pct" min="5" max="200" step="5" value="50"></label>
           <label class="campo" data-m="maximo exacto">Ancho (px) <input type="number" name="ancho" min="1" value="1920" placeholder="automático"></label>

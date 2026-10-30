@@ -23,8 +23,9 @@ export const DATOS = [
       const panel = html(el, `<div class="panel" hidden><div class="opciones-rejilla">
           <label class="campo" data-si="hojas">Hoja <select name="hoja"></select></label>
           <label class="campo">Guardar como <select name="formato">${Object.entries(DA.SALIDAS_HOJA).map(([k, f]) => `<option value="${k}">${f.nombre}</option>`).join('')}</select></label>
-          <label class="campo" data-si="csv">Separador <select name="sep"><option value=";">Punto y coma ; (Excel en español)</option><option value=",">Coma ,</option><option value="&#9;">Tabulador</option></select></label>
+          <label class="campo" data-si="csv">Separador <select name="sep"><option value=";">Punto y coma (;)</option><option value=",">Coma (,)</option><option value="&#9;">Tabulador</option></select></label>
         </div>
+        <p class="ayuda" data-si="csv">Excel en español usa punto y coma y la coma para los decimales; en inglés, coma y punto.</p>
         <label class="check" data-si="csv"><input type="checkbox" name="bom" checked> Que Excel reconozca los acentos (UTF-8 con BOM)</label>
         <label class="check" data-si="todas"><input type="checkbox" name="todas"> Todas las hojas (un archivo por hoja, en un ZIP)</label>
         <div class="tabla-previa"></div><p class="ayuda info"></p>

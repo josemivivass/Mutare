@@ -87,8 +87,9 @@ export const DOCUMENTOS = [
           <label class="campo">Guardar como <select name="destino">${Object.entries(D.CODIFICACIONES).map(([k, v]) => `<option value="${k}" ${k === 'utf-8' ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
           <label class="campo">Saltos de línea <select name="saltos"><option value="">Como estén</option><option value="crlf">Windows (CRLF)</option><option value="lf">Linux / Mac (LF)</option></select></label>
         </div>
+        <p class="ayuda">UTF-8 es lo normal hoy. Para abrir un CSV en Excel con los acentos bien, «UTF-8 con BOM». Windows-1252 (ANSI) es para programas antiguos de Windows.</p>
         <label class="check"><input type="checkbox" name="reparar"> Reparar texto ya estropeado («Ã±» → «ñ», «Ã©» → «é»)</label>
-        <div class="campo">Vista previa del primero <pre class="texto-salida" style="max-height:180px;overflow:auto;white-space:pre-wrap"></pre></div>
+        <div class="campo">Vista previa del primero <pre class="texto-salida" style="min-height:0;height:auto;max-height:180px;overflow:auto;white-space:pre-wrap"></pre></div>
         <button type="button" class="btn acento grande">Convertir</button><div class="progreso"></div></div>`);
       const texto = (it) => {
         let t = decodificar(it.bytes, $('[name=origen]', panel).value || codificacionDe(it.bytes));

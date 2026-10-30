@@ -1,6 +1,6 @@
 // Componentes de la interfaz que comparten las herramientas.
 
-import { $, $$, esc, aviso, tamano, leer, descargar, puedeCompartir, compartir } from './util.js';
+import { $, $$, esc, aviso, tamano, leer, descargar } from './util.js';
 import { I } from './iconos.js';
 import { abrirVista, dibujar, esPdf } from './motor.js';
 
@@ -290,7 +290,7 @@ export class RejillaPaginas {
 }
 
 // ---------------------------------------------------------------------------
-// Resultado: descarga, compartir y vista previa opcional de una página
+// Resultado: descarga y vista previa opcional de una página
 // ---------------------------------------------------------------------------
 
 export async function resultado(contenedor, { blob, nombre, detalle = '', auto = true, previa = null }) {
@@ -300,11 +300,10 @@ export async function resultado(contenedor, { blob, nombre, detalle = '', auto =
   div.innerHTML = `${I.ok}<div class="res-texto"><b>${esc(nombre)}</b><small>${esc(detalle || tamano(blob.size))}</small></div>
     <div class="acciones-final">
       <button type="button" class="btn acento" data-r="bajar">${I.descargar}Descargar</button>
-      ${puedeCompartir(blob, nombre) ? `<button type="button" class="btn" data-r="compartir">${I.compartir}Compartir</button>` : ''}
     </div>`;
   div.addEventListener('click', (e) => {
     const b = e.target.closest('[data-r]'); if (!b) return;
-    b.dataset.r === 'bajar' ? descargar(blob, nombre) : compartir(blob, nombre);
+    descargar(blob, nombre);
   });
   contenedor.appendChild(div);
   if (auto) descargar(blob, nombre);

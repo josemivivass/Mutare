@@ -36,7 +36,6 @@ export const I = {
 
   subir: svg('<path d="M12 16V4m0 0-4 4m4-4 4 4"/><path d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/>'),
   descargar: svg('<path d="M12 4v12m0 0-4-4m4 4 4-4"/><path d="M4 19h16"/>'),
-  compartir: svg('<circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8.2 10.8 7.6-4.5M8.2 13.2l7.6 4.5"/>'),
   arriba: svg('<path d="m6 15 6-6 6 6"/>'),
   abajo: svg('<path d="m6 9 6 6 6-6"/>'),
   izquierda: svg('<path d="m15 6-6 6 6 6"/>'),

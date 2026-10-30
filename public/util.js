@@ -37,16 +37,6 @@ export function descargar(blob, nombre) {
   setTimeout(() => URL.revokeObjectURL(url), 60000);
 }
 
-export function puedeCompartir(blob, nombre) {
-  try { return !!navigator.canShare && navigator.canShare({ files: [new File([blob], nombre, { type: blob.type })] }); }
-  catch (_) { return false; }
-}
-export async function compartir(blob, nombre) {
-  try { await navigator.share({ files: [new File([blob], nombre, { type: blob.type })], title: nombre }); }
-  catch (e) { if (e.name !== 'AbortError') aviso('No se pudo compartir: ' + e.message, { error: true }); }
-}
-
-// Deja que el navegador pinte (para que se vean los mensajes de progreso)
 export const respirar = () => new Promise((r) => setTimeout(r, 0));
 
 // Interpreta «1-3, 5, 8-» sobre un total de páginas. Devuelve grupos de índices (desde 0).

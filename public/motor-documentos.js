@@ -114,10 +114,10 @@ function decodificarEntidades(s) {
 // ---------------------------------------------------------------------------
 export const CODIFICACIONES = {
   'utf-8': 'UTF-8',
-  'utf-8-bom': 'UTF-8 con BOM (Excel lo reconoce)',
-  'windows-1252': 'Windows-1252 / ANSI (Excel antiguo, Windows)',
-  'iso-8859-15': 'ISO-8859-15 (Latin-9)',
-  'utf-16le': 'UTF-16 LE (Unicode de Windows)',
+  'utf-8-bom': 'UTF-8 con BOM',
+  'windows-1252': 'Windows-1252 (ANSI)',
+  'iso-8859-15': 'ISO-8859-15',
+  'utf-16le': 'UTF-16 LE',
 };
 
 // Tabla inversa (carácter → byte) de las codificaciones de un byte

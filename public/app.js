@@ -74,7 +74,7 @@ function inicio() {
 
 function herramienta(h) {
   caja.value = ''; // al entrar en una herramienta, la búsqueda ya ha cumplido
-  miga.hidden = false; miga.textContent = `${CATEGORIAS.find((c) => c.id === h.categoria).nombre} · ${h.nombre}`;
+  miga.hidden = false; miga.textContent = h.nombre;
   document.title = `${h.nombre} · Mutare`;
   contenido.innerHTML = `<a class="volver" href="#">${I.volver}Todas las herramientas</a>
     <div class="cab-herr"><span class="icono-herr">${h.icono}</span><div><h2>${esc(h.nombre)}</h2><p>${esc(h.desc)}</p></div></div>

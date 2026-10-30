@@ -100,10 +100,11 @@ export const MULTIMEDIA = [
       unArchivo(el, { acepta: ACEPTA_VIDEO, titulo: 'Elige un vídeo', alCargar: (x) => { it = x; info = null; panel.hidden = false; } });
       const panel = html(el, `<div class="panel" hidden><div class="opciones-rejilla">
         <label class="campo">Formato <select name="formato">${Object.entries(VIDEO).map(([k, f]) => `<option value="${k}">${f.nombre}</option>`).join('')}</select></label>
-        <label class="campo" data-no="gif">Calidad <select name="calidad"><option value="alta">Alta</option><option value="media" selected>Media (ocupa bastante menos)</option><option value="baja">Baja (ocupa muy poco)</option></select></label>
+        <label class="campo" data-no="gif">Calidad <select name="calidad"><option value="alta">Alta</option><option value="media" selected>Media</option><option value="baja">Baja</option></select></label>
         <label class="campo">Resolución máxima <select name="altura"><option value="">Como el original</option><option value="1080">1080p</option><option value="720">720p</option><option value="480">480p</option><option value="360">360p</option></select></label>
         <label class="campo" data-si="gif" hidden>Fotogramas por segundo <select name="fps"><option value="8">8</option><option value="12" selected>12</option><option value="15">15</option><option value="24">24</option></select></label>
         </div>
+        <p class="ayuda" data-no="gif">Calidad media: casi igual y ocupa bastante menos. Baja: ocupa muy poco, para enviar por mensajería.</p>
         <label class="check" data-no="gif"><input type="checkbox" name="sinAudio"> Quitar el sonido</label>
         <label class="check" data-no="gif"><input type="checkbox" name="copiar"> Rápido: solo cambiar el formato, sin recomprimir (si los códecs lo permiten; ignora calidad y resolución)</label>
         ${AYUDA}<button type="button" class="btn acento grande">Convertir</button><div class="progreso"></div></div>`);
@@ -128,8 +129,9 @@ export const MULTIMEDIA = [
       let it = null;
       unArchivo(el, { acepta: ACEPTA_VIDEO, titulo: 'Elige un vídeo', alCargar: (x) => { it = x; panel.hidden = false; } });
       const panel = html(el, `<div class="panel" hidden><div class="opciones-rejilla">
-        <label class="campo">Formato <select name="formato"><option value="original">Tal cual viene (sin recomprimir, lo más rápido)</option>${Object.entries(AUDIO).map(([k, f]) => `<option value="${k}" ${k === 'mp3' ? 'selected' : ''}>${f.nombre}</option>`).join('')}</select></label>
+        <label class="campo">Formato <select name="formato"><option value="original">Original, sin recomprimir</option>${Object.entries(AUDIO).map(([k, f]) => `<option value="${k}" ${k === 'mp3' ? 'selected' : ''}>${f.nombre}</option>`).join('')}</select></label>
         <label class="campo" data-si="br">Calidad <select name="br"><option value="128">128 kbps</option><option value="192" selected>192 kbps</option><option value="320">320 kbps</option></select></label></div>
+        <p class="ayuda">«Original» guarda el sonido tal como viene dentro del vídeo: es lo más rápido y no pierde nada de calidad.</p>
         ${AYUDA}<button type="button" class="btn acento grande">Sacar el audio</button><div class="progreso"></div></div>`);
       const act = () => { const f = $('[name=formato]', panel).value; $('[data-si=br]', panel).hidden = f === 'original' || !!AUDIO[f]?.sinBitrate; };
       panel.addEventListener('change', act); act();
