@@ -123,8 +123,8 @@ export const MULTIMEDIA = [
     },
   },
   {
-    id: 'av-video', categoria: 'multimedia', nombre: 'Convertir o comprimir vídeo', icono: I.video,
-    desc: 'A MP4, WebM, MOV, MKV o GIF animado. También para que ocupe menos o bajar la resolución.',
+    id: 'av-video', categoria: 'multimedia', nombre: 'Convertir vídeo', icono: I.video,
+    desc: 'A MP4, WebM, MOV, MKV o GIF animado. También para comprimirlo o bajar la resolución.',
     palabras: 'mp4 mov mkv webm avi wmv gif comprimir reducir resolucion 720 1080 iphone',
     montar(el) {
       let it = null, info = null;
@@ -164,7 +164,7 @@ export const MULTIMEDIA = [
     },
   },
   {
-    id: 'av-extraer', categoria: 'multimedia', nombre: 'Sacar el audio de un vídeo', icono: I.extraerAudio,
+    id: 'av-extraer', categoria: 'multimedia', nombre: 'Sacar el audio', icono: I.extraerAudio,
     desc: 'Guarda solo el sonido de un vídeo: en MP3, M4A o tal cual viene, sin perder calidad.',
     palabras: 'extraer audio musica de video mp3 youtube',
     montar(el) {

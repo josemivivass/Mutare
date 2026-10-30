@@ -23,14 +23,14 @@ entrega la página (HTML, CSS, JS y las librerías), así que apenas gasta recur
 | | Quitar datos ocultos | GPS, cámara, fecha… En JPG y PNG sin recomprimir |
 | | Girar y voltear | 90/180/270° y espejo |
 | Audio y vídeo | Convertir audio | MP3, M4A (AAC), OGG, Opus, WAV, FLAC |
-| | Convertir o comprimir vídeo | MP4, WebM, MOV, MKV o GIF; calidad, resolución, quitar sonido, cambio rápido de formato |
-| | Sacar el audio de un vídeo | Tal cual (sin recomprimir) o en MP3, M4A… |
+| | Convertir vídeo | MP4, WebM, MOV, MKV o GIF; calidad, resolución, quitar sonido, cambio rápido de formato |
+| | Sacar el audio | Tal cual (sin recomprimir) o en MP3, M4A… |
 | | Recortar audio o vídeo | Rápido (sin recomprimir) o exacto |
-| Documentos y texto | Word a PDF, HTML o texto | Abre .docx sin Office |
-| | Markdown a Word, PDF o HTML | Con vista previa en directo |
-| | Arreglar acentos y codificación | UTF-8, UTF-8 con BOM, Windows-1252, ISO-8859-15, UTF-16; saltos de línea; repara «Ã±» |
+| Documentos y texto | Convertir Word | Abre .docx sin Office |
+| | Convertir Markdown | A Word, PDF o HTML, con vista previa en directo |
+| | Arreglar acentos | UTF-8, UTF-8 con BOM, Windows-1252, ISO-8859-15, UTF-16; saltos de línea; repara «Ã±» |
 | Datos | Convertir hojas de cálculo | XLSX, XLS, ODS, CSV (con «;» y decimales con coma), JSON, HTML |
-| | JSON, YAML, TOML, XML y CSV | Entre sí, con validación |
+| | Convertir datos | JSON, YAML, TOML, XML y CSV entre sí, con validación |
 | ZIP | Crear un ZIP | Con o sin compresión |
 | | Abrir un ZIP | Ver el contenido, sacar archivos sueltos o extraerlo todo en una carpeta |
 
@@ -41,9 +41,11 @@ En audio y vídeo, «Probar con una muestra» convierte unos segundos con los aj
 elegidos y estima lo que ocupará el archivo entero.
 
 Funciona sin conexión una vez abierta (service worker) y se puede instalar como app
-en el móvil o el ordenador. Hay un buscador en la portada («heic», «mp3», «excel»…).
+en el móvil o el ordenador. En ordenador y portátil, la portada enseña todas las
+herramientas de un vistazo, sin desplazarse. Hay un buscador en la cabecera
+(«heic», «mp3», «excel»…).
 
-Los PDF de «Word a PDF» y «Markdown a PDF» los genera el propio navegador desde el
+Los PDF de «Convertir Word» y «Convertir Markdown» los genera el propio navegador desde el
 cuadro de impresión («Guardar como PDF»), así el texto sigue siendo texto.
 
 ## Arrancar

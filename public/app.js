@@ -63,14 +63,29 @@ caja.addEventListener('keydown', (e) => {
 function inicio() {
   miga.hidden = true;
   document.title = 'Mutare';
-  const tarjeta = (h) => `<a class="tarjeta-herr" href="#/${h.id}" data-buscar="${esc(normal(`${h.nombre} ${h.desc} ${h.palabras || ''}`))}"><span class="icono-herr">${h.icono}</span><b>${esc(h.nombre)}</b><span>${esc(h.desc)}</span></a>`;
+  const tarjeta = (h) => `<a class="tarjeta-herr" href="#/${h.id}" title="${esc(h.desc)}" data-buscar="${esc(normal(`${h.nombre} ${h.desc} ${h.palabras || ''}`))}"><span class="icono-herr">${h.icono}</span><b>${esc(h.nombre)}</b><span>${esc(h.desc)}</span></a>`;
   contenido.innerHTML = `
     <p class="privacidad">${I.candado}<span>Todo se hace en tu dispositivo: los archivos no se suben a ningún sitio, ni siquiera a este servidor. Puedes usarla sin conexión.</span></p>
-    ${CATEGORIAS.map((c) => `<section class="categoria"><h2 class="grupo-titulo">${esc(c.nombre)}</h2>
-      <div class="herramientas">${HERRAMIENTAS.filter((h) => h.categoria === c.id).map(tarjeta).join('')}</div></section>`).join('')}
+    <div class="portada">${CATEGORIAS.map((c) => `<section class="categoria cat-${c.id}"><h2 class="grupo-titulo">${esc(c.nombre)}</h2>
+      <div class="herramientas">${HERRAMIENTAS.filter((h) => h.categoria === c.id).map(tarjeta).join('')}</div></section>`).join('')}</div>
     <p class="sin-resultados" hidden>No hay ninguna herramienta con ese nombre.</p>`;
   filtrar();
+  ajustarPortada();
 }
+
+// En ordenador la portada debe caber entera: si la ventana es baja, las
+// descripciones pasan a una línea y, si aun así no cabe, se quitan (siguen en
+// el título emergente de cada tarjeta).
+function ajustarPortada() {
+  const p = contenido.querySelector('.portada'); if (!p) return;
+  p.classList.remove('una-linea', 'sin-desc');
+  if (innerWidth < 1200) return;
+  const sobra = () => document.documentElement.scrollHeight > innerHeight;
+  if (sobra()) p.classList.add('una-linea');
+  if (sobra()) p.classList.add('sin-desc');
+}
+let tAjuste = null;
+addEventListener('resize', () => { clearTimeout(tAjuste); tAjuste = setTimeout(ajustarPortada, 120); });
 
 function herramienta(h) {
   caja.value = ''; // al entrar en una herramienta, la búsqueda ya ha cumplido

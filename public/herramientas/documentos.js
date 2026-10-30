@@ -16,8 +16,8 @@ const botonesSalida = (extra = '') => `<div class="acciones-final">
 
 export const DOCUMENTOS = [
   {
-    id: 'doc-word', categoria: 'documentos', nombre: 'Word a PDF, HTML o texto', icono: I.word,
-    desc: 'Abre un .docx y guárdalo como PDF, página web o texto, sin tener Office.',
+    id: 'doc-word', categoria: 'documentos', nombre: 'Convertir Word', icono: I.word,
+    desc: 'Un .docx a PDF, página web o texto, sin tener Office.',
     palabras: 'docx word office pdf html txt convertir documento',
     montar(el) {
       let it = null, cuerpo = '';
@@ -42,8 +42,8 @@ export const DOCUMENTOS = [
     },
   },
   {
-    id: 'doc-markdown', categoria: 'documentos', nombre: 'Markdown a Word, PDF o HTML', icono: I.markdown,
-    desc: 'Escribe o abre un .md y conviértelo en un documento con formato.',
+    id: 'doc-markdown', categoria: 'documentos', nombre: 'Convertir Markdown', icono: I.markdown,
+    desc: 'Escribe o abre un .md y pásalo a Word, PDF o página web.',
     palabras: 'md markdown readme notas word docx pdf html',
     montar(el) {
       let nombre = 'documento';
@@ -75,7 +75,7 @@ export const DOCUMENTOS = [
     },
   },
   {
-    id: 'doc-codificacion', categoria: 'documentos', nombre: 'Arreglar acentos y codificación', icono: I.codificacion,
+    id: 'doc-codificacion', categoria: 'documentos', nombre: 'Arreglar acentos', icono: I.codificacion,
     desc: '¿Ves «Ã±» en vez de «ñ»? Cambia la codificación de textos, CSV o subtítulos.',
     palabras: 'utf-8 ansi windows-1252 latin1 iso bom acentos ñ caracteres raros csv excel subtitulos srt saltos de linea',
     montar(el) {

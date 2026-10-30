@@ -367,3 +367,55 @@ audio.reproductor { background: transparent; height: 54px; }
 .resultado { flex-wrap: wrap; }
 .arch.viendo { border-color: var(--acento); box-shadow: inset 3px 0 0 var(--acento); }
 .lista-arch .arch { cursor: default; }
+
+/* ---------- portada en ordenador y portátil: todo a la vista, sin scroll ----------
+   Cinco columnas: PDF ocupa dos (5 + 4 herramientas), Imágenes una, y las dos
+   últimas llevan dos categorías cada una (Audio y vídeo + ZIP, Documentos + Datos).
+   Las tarjetas pasan a ser filas compactas con la descripción en 2 líneas; si la
+   ventana es baja, app.js la deja en 1 línea o la quita (entera, al pasar el
+   ratón por la tarjeta). */
+@media (min-width: 1200px) {
+  .portada {
+    display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px 12px; align-items: start;
+    grid-template-areas: "pdf pdf img av doc" "pdf pdf img zip datos";
+  }
+  .cat-pdf { grid-area: pdf; } .cat-imagenes { grid-area: img; } .cat-multimedia { grid-area: av; }
+  .cat-zip { grid-area: zip; } .cat-documentos { grid-area: doc; } .cat-datos { grid-area: datos; }
+  .portada .grupo-titulo { margin: 0 0 7px; font-size: 1.25rem; }
+  .portada .herramientas { grid-template-columns: minmax(0, 1fr); gap: 7px; }
+  .portada .cat-pdf .herramientas { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(5, auto); grid-auto-flow: column; }
+  .portada .tarjeta-herr { grid-template-columns: 30px minmax(0, 1fr); gap: 0 10px; padding: 8px 10px; align-items: center; }
+  .portada .tarjeta-herr .icono-herr { width: 30px; height: 30px; }
+  .portada .tarjeta-herr .icono-herr svg { width: 17px; height: 17px; }
+  .portada .tarjeta-herr b { font-size: .98rem; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .portada .tarjeta-herr span:not(.icono-herr) { font-size: .78rem; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .contenido:has(.portada) { padding-top: 10px; padding-bottom: 16px; }
+  .contenido:has(.portada) .privacidad { margin: 0 0 12px; }
+}
+@media (min-width: 1200px) {
+  .portada .tarjeta-herr { align-items: start; padding: 9px 11px; }
+  .portada .tarjeta-herr span:not(.icono-herr) { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .portada.una-linea .tarjeta-herr { align-items: center; padding: 8px 10px; }
+  .portada.una-linea .tarjeta-herr span:not(.icono-herr) { display: block; white-space: nowrap; }
+}
+/* Pantallas grandes: más aire */
+@media (min-width: 1200px) and (min-height: 860px) {
+  .portada { gap: 24px 18px; }
+  .portada .grupo-titulo { margin-bottom: 11px; font-size: 1.45rem; }
+  .portada .herramientas { gap: 10px; }
+  .portada .tarjeta-herr { padding: 12px 14px; grid-template-columns: 38px minmax(0, 1fr); gap: 1px 12px; }
+  .portada .tarjeta-herr .icono-herr { width: 38px; height: 38px; }
+  .portada .tarjeta-herr .icono-herr svg { width: 21px; height: 21px; }
+  .portada .tarjeta-herr b { font-size: 1.08rem; white-space: normal; }
+  .portada .tarjeta-herr span:not(.icono-herr) { font-size: .84rem; }
+  .contenido:has(.portada) { padding-top: 20px; }
+  .contenido:has(.portada) .privacidad { margin-bottom: 20px; }
+}
+@media (min-width: 1200px) {
+  /* Sin barra de desplazamiento en la portada (todo cabe; si no, se puede seguir usando la rueda) */
+  html:has(.portada) { scrollbar-width: none; }
+  html:has(.portada)::-webkit-scrollbar { display: none; }
+  .portada.sin-desc .tarjeta-herr span:not(.icono-herr) { display: none; }
+  .portada.sin-desc .tarjeta-herr { align-items: center; padding-top: 7px; padding-bottom: 7px; }
+}
+@media (min-width: 1200px) and (max-width: 1279px) { .portada .tarjeta-herr b { font-size: .94rem; white-space: normal; } }

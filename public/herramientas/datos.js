@@ -65,8 +65,8 @@ export const DATOS = [
     },
   },
   {
-    id: 'datos-formatos', categoria: 'datos', nombre: 'JSON, YAML, TOML, XML y CSV', icono: I.datos,
-    desc: 'Pasa datos de un formato a otro, o pon bonito (o compacta) un JSON.',
+    id: 'datos-formatos', categoria: 'datos', nombre: 'Convertir datos', icono: I.datos,
+    desc: 'JSON, YAML, TOML, XML y CSV entre sí. También pone bonito (o compacta) un JSON.',
     palabras: 'json yaml yml toml xml csv formatear validar bonito minificar configuracion',
     montar(el) {
       let nombre = 'datos';
