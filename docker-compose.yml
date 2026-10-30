@@ -1,0 +1,13 @@
+services:
+  pdf-converter:
+    build: .
+    image: pdf-converter:latest
+    container_name: pdf-converter
+    restart: unless-stopped
+    init: true
+    read_only: true
+    ports:
+      - "9996:9996"
+    environment:
+      TZ: Europe/Madrid
+    mem_limit: 96m

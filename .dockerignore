@@ -1,0 +1,8 @@
+# Solo entra en la imagen el servidor y la carpeta public
+.git
+.gitignore
+Dockerfile
+docker-compose.yml
+.dockerignore
+LEEME.md
+pruebas
