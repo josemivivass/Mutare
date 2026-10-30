@@ -101,6 +101,9 @@ a { color: var(--acento); }
 .miga::before { content: "/"; margin-right: 14px; color: var(--borde); }
 .acciones-top { margin-left: auto; display: flex; gap: 8px; align-items: center; flex: none; }
 .acciones-top .btn, .acciones-top .btn-tema { height: 38px; }
+/* Buscador en la cabecera, como en Venditor */
+.acciones-top { flex: 0 1 auto; min-width: 0; }
+.buscar-top { flex: 0 1 330px; width: 330px; min-width: 104px; height: 38px; box-sizing: border-box; }
 
 .contenido { max-width: 1400px; margin: 0 auto; padding: 16px max(20px, env(safe-area-inset-right)) calc(48px + env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left)); }
 
@@ -297,6 +300,8 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
   .marca-nombre { font-size: 1.4rem; }
   .miga::before { margin-right: 10px; }
   .acciones-top .btn-tema { width: 36px; height: 36px; }
+  .acciones-top { gap: 6px; }
+  .buscar-top { height: 36px; width: 200px; }
   .contenido { padding: 12px max(12px, env(safe-area-inset-right)) calc(40px + env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); }
   .herramientas { grid-template-columns: minmax(0, 1fr); gap: 8px; }
   .tarjeta-herr { padding: 12px 14px; }
@@ -311,11 +316,6 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--a
 
 /* ---------- conversores (imágenes, audio y vídeo, documentos, datos, ZIP) ---------- */
 .arch-ext { font-family: var(--sans); font-weight: 600; font-size: .7rem; color: var(--acento); letter-spacing: .03em; }
-.buscador { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 10px 0 2px; }
-.buscador input[type=search] { flex: 1 1 260px; max-width: 420px; }
-.saltos { display: flex; gap: 6px; flex-wrap: wrap; }
-.saltos a { text-decoration: none; color: var(--texto-suave); border: 1px solid var(--borde); border-radius: 999px; padding: 4px 12px; font-size: .86rem; background: var(--superficie); }
-.saltos a:hover { color: var(--acento); border-color: var(--acento); }
 .categoria-desc { color: var(--texto-suave); margin: -6px 0 12px; font-size: .92rem; }
 .sin-resultados { color: var(--texto-suave); font-style: italic; font-family: var(--serif); margin-top: 24px; }
 .cargando-motor { display: flex; align-items: center; gap: 10px; color: var(--texto-suave); font-size: .9rem; }
@@ -345,4 +345,3 @@ audio.reproductor { background: transparent; height: 54px; }
 @media print { body.imprimiendo > *:not(iframe) { display: none; } }
 @media (max-width: 760px) { .entradas-zip li { grid-template-columns: minmax(0, 1fr) auto; } .entradas-zip li > :first-child, .entradas-zip li small { display: none; } }
 .tarjeta-herr[hidden], .categoria[hidden] { display: none; }
-.categoria { scroll-margin-top: 70px; }
