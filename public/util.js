@@ -55,3 +55,15 @@ export function rangos(texto, total) {
   if (!grupos.length) throw new Error('Escribe qué páginas quieres, por ejemplo 1-3, 5');
   return grupos;
 }
+
+// Por http:// con una IP (como se abre desde el panel del homelab) el navegador
+// no da algunas funciones «seguras»: crypto.randomUUID ni el portapapeles moderno.
+export const nuevoId = () => (globalThis.crypto?.randomUUID ? crypto.randomUUID() : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`);
+
+export async function copiarTexto(texto) {
+  if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(texto);
+  const ta = document.createElement('textarea');
+  ta.value = texto; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;top:-1000px;opacity:0';
+  document.body.appendChild(ta); ta.select();
+  try { if (!document.execCommand('copy')) throw new Error('no se pudo copiar'); } finally { ta.remove(); }
+}

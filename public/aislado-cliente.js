@@ -1,5 +1,7 @@
 // Habla con aislado.html: una página invisible, sin acceso a la red, donde
 // corren las librerías que necesitan evaluar código (heic2any, mammoth).
+import { nuevoId } from './util.js';
+
 let marco = null;
 function abrir() {
   return (marco ||= new Promise((ok, mal) => {
@@ -14,7 +16,7 @@ function abrir() {
 }
 export async function aislado(op, datos) {
   const f = await abrir();
-  const id = crypto.randomUUID();
+  const id = nuevoId();
   return new Promise((ok, mal) => {
     addEventListener('message', function h(e) {
       if (e.source !== f.contentWindow || e.data?.id !== id) return;

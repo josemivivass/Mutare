@@ -1,7 +1,7 @@
 // Las herramientas: cada una monta su pantalla dentro de «el» y devuelve una
 // función de limpieza (libera los documentos abiertos al salir).
 
-import { $, $$, esc, aviso, tamano, base, rangos, descargar } from '../util.js';
+import { $, $$, esc, aviso, tamano, base, rangos, descargar, copiarTexto } from '../util.js';
 import { I } from '../iconos.js';
 import { crearZip } from '../zip.js';
 import * as M from '../motor.js';
@@ -186,7 +186,7 @@ export const PDF = [
       panel.addEventListener('click', (e) => {
         const a = e.target.closest('[data-a]')?.dataset.a; if (!a) return;
         if (a === 'txt') descargar(new Blob([texto || ''], { type: 'text/plain;charset=utf-8' }), `${base(doc.nombre)}.txt`);
-        if (a === 'copiar') navigator.clipboard.writeText(texto || '').then(() => aviso('Texto copiado'), () => aviso('No se pudo copiar', { error: true }));
+        if (a === 'copiar') copiarTexto(texto || '').then(() => aviso('Texto copiado'), () => aviso('No se pudo copiar', { error: true }));
         if (a === 'imagenes') tarea(e.target.closest('button'), $('.progreso', panel), async (prog) => {
           const formato = valorRadio(panel, 'formato');
           const imgs = await M.aImagenes(doc.bytes, { formato, ppp: Number($('[name=ppp]', panel).value), indices: indices(), nombre: base(doc.nombre), calidad: Number($('[name=calidad]', panel).value) / 100 }, prog);

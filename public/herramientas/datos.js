@@ -1,5 +1,5 @@
 // Herramientas de datos y hojas de cálculo.
-import { $, $$, aviso, tamano, base, esc, descargar } from '../util.js';
+import { $, $$, aviso, tamano, base, esc, descargar, copiarTexto } from '../util.js';
 import { I } from '../iconos.js';
 import { zona, tarea, resultado, VistaPrevia } from '../ui.js';
 import { html, radios, valorRadio, unArchivo, conExtension } from './comun.js';
@@ -122,7 +122,7 @@ export const DATOS = [
         if (!v) return aviso('No hay nada que guardar todavía', { error: true });
         const f = $('[name=a]', panel).value;
         if (a === 'bajar') descargar(new Blob([v], { type: 'text/plain;charset=utf-8' }), `${nombre}.${f}`);
-        else navigator.clipboard.writeText(v).then(() => aviso('Copiado'), () => aviso('No se pudo copiar', { error: true }));
+        else copiarTexto(v).then(() => aviso('Copiado'), () => aviso('No se pudo copiar', { error: true }));
       });
     },
   },

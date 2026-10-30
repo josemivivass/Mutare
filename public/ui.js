@@ -1,6 +1,6 @@
 // Componentes de la interfaz que comparten las herramientas.
 
-import { $, $$, esc, aviso, tamano, leer, descargar } from './util.js';
+import { $, $$, esc, aviso, tamano, leer, descargar, nuevoId } from './util.js';
 import { I } from './iconos.js';
 import { abrirVista, dibujar, esPdf } from './motor.js';
 
@@ -42,7 +42,7 @@ export async function prepararArchivos(files) {
   const salida = [];
   for (const f of files) {
     const bytes = await leer(f);
-    const it = { id: crypto.randomUUID(), nombre: f.name, mime: f.type, bytes, tam: f.size, pdf: esPdf(bytes) };
+    const it = { id: nuevoId(), nombre: f.name, mime: f.type, bytes, tam: f.size, pdf: esPdf(bytes) };
     if (it.pdf) {
       try { const v = await abrirVista(bytes); it.paginas = v.numPages; v.destroy(); }
       catch (e) { aviso(`No se pudo abrir «${f.name}»: ${/password/i.test(e.name + e.message) ? 'tiene contraseña' : e.message}`, { error: true }); continue; }
