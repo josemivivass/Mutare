@@ -1,40 +1,21 @@
 // Las herramientas: cada una monta su pantalla dentro de «el» y devuelve una
 // función de limpieza (libera los documentos abiertos al salir).
 
-import { $, $$, esc, aviso, tamano, base, rangos, descargar } from './util.js';
-import { I } from './iconos.js';
-import { crearZip } from './zip.js';
-import * as M from './motor.js';
-import { zona, prepararArchivos, ListaArchivos, RejillaPaginas, resultado, tarea, PanelFirma, imagenAFirma, ACEPTA_PDF, ACEPTA_IMG, ACEPTA_TODO } from './ui.js';
+import { $, $$, aviso, tamano, base, rangos, descargar } from '../util.js';
+import { I } from '../iconos.js';
+import { crearZip } from '../zip.js';
+import * as M from '../motor.js';
+import { zona, prepararArchivos, ListaArchivos, RejillaPaginas, resultado, tarea, PanelFirma, imagenAFirma, ACEPTA_PDF, ACEPTA_IMG, ACEPTA_TODO } from '../ui.js';
+import { html, radios, valorRadio, unPdf } from './comun.js';
 
 const pdfBlob = (bytes) => new Blob([bytes], { type: 'application/pdf' });
-const html = (el, h) => { el.insertAdjacentHTML('beforeend', h); return el.lastElementChild; };
-
-// Un solo PDF de entrada: zona grande y, una vez elegido, una línea compacta
-// para cambiarlo. alCargar recibe { nombre, bytes, paginas }.
-function unPdf(el, alCargar, titulo = 'Elige un PDF') {
-  const caja = html(el, '<div></div>');
-  const poner = async (files) => {
-    const [it] = await prepararArchivos(files);
-    if (!it) return;
-    caja.replaceChildren(zona({ acepta: ACEPTA_PDF, multiple: false, titulo: it.nombre, subtitulo: `${it.paginas} página${it.paginas === 1 ? '' : 's'} · ${tamano(it.tam)} · toca para cambiarlo`, compacta: true, alElegir: poner }));
-    await alCargar(it);
-  };
-  caja.appendChild(zona({ acepta: ACEPTA_PDF, multiple: false, titulo, alElegir: poner }));
-}
-
-function radios(nombre, opciones, valor) {
-  return `<div class="segmentado" role="radiogroup">${opciones.map(([v, t]) =>
-    `<label><input type="radio" name="${nombre}" value="${v}" ${v === valor ? 'checked' : ''}> ${t}</label>`).join('')}</div>`;
-}
-const valorRadio = (el, nombre) => $(`input[name="${nombre}"]:checked`, el)?.value;
 
 // ===========================================================================
 
-export const HERRAMIENTAS = [
+export const PDF = [
   // ------------------------------------------------------------------ Organizar
   {
-    id: 'juntar', grupo: 'Organizar', nombre: 'Juntar PDF', icono: I.juntar,
+    id: 'juntar', categoria: 'pdf', nombre: 'Juntar PDF', icono: I.juntar,
     desc: 'Une varios PDF (y fotos) en uno, en el orden que quieras.',
     montar(el) {
       el.appendChild(zona({ acepta: ACEPTA_TODO, titulo: 'Elige los PDF o imágenes', alElegir: async (f) => lista.anadir(await prepararArchivos(f)) }));
@@ -52,7 +33,7 @@ export const HERRAMIENTAS = [
     },
   },
   {
-    id: 'organizar', grupo: 'Organizar', nombre: 'Ordenar páginas', icono: I.organizar,
+    id: 'organizar', categoria: 'pdf', nombre: 'Ordenar páginas', icono: I.organizar,
     desc: 'Mueve, gira, quita o añade páginas en blanco. También mezcla varios PDF.',
     montar(el) {
       el.appendChild(zona({ acepta: ACEPTA_PDF, titulo: 'Elige uno o varios PDF', compacta: false, alElegir: async (files) => {
@@ -105,7 +86,7 @@ export const HERRAMIENTAS = [
     },
   },
   {
-    id: 'separar', grupo: 'Organizar', nombre: 'Separar PDF', icono: I.separar,
+    id: 'separar', categoria: 'pdf', nombre: 'Separar PDF', icono: I.separar,
     desc: 'Divide un PDF en varios: por páginas, cada cierto número o por rangos.',
     montar(el) {
       let doc = null;
@@ -143,7 +124,7 @@ export const HERRAMIENTAS = [
     },
   },
   {
-    id: 'rotar', grupo: 'Organizar', nombre: 'Rotar PDF', icono: I.rotar,
+    id: 'rotar', categoria: 'pdf', nombre: 'Rotar PDF', icono: I.rotar,
     desc: 'Gira todas las páginas, o solo las que elijas.',
     montar(el) {
       let doc = null;
@@ -172,7 +153,7 @@ export const HERRAMIENTAS = [
 
   // ------------------------------------------------------------------ Convertir
   {
-    id: 'imagenes', grupo: 'Convertir', nombre: 'Imágenes a PDF', icono: I.imagenes,
+    id: 'imagenes', categoria: 'pdf', nombre: 'Imágenes a PDF', icono: I.imagenes,
     desc: 'Fotos o capturas (JPG, PNG, WebP…) a un PDF, una por página.',
     montar(el) {
       el.appendChild(zona({ acepta: ACEPTA_IMG, titulo: 'Elige las imágenes', alElegir: async (f) => lista.anadir(await prepararArchivos(f)) }));
@@ -190,7 +171,7 @@ export const HERRAMIENTAS = [
     },
   },
   {
-    id: 'aimagenes', grupo: 'Convertir', nombre: 'PDF a imágenes', icono: I.aimagenes,
+    id: 'aimagenes', categoria: 'pdf', nombre: 'PDF a imágenes', icono: I.aimagenes,
     desc: 'Cada página como imagen PNG o JPG.',
     montar(el) {
       let doc = null;
@@ -213,7 +194,7 @@ export const HERRAMIENTAS = [
     },
   },
   {
-    id: 'comprimir', grupo: 'Convertir', nombre: 'Comprimir PDF', icono: I.comprimir,
+    id: 'comprimir', categoria: 'pdf', nombre: 'Comprimir PDF', icono: I.comprimir,
     desc: 'Reduce lo que ocupa: sin perder nada, o mucho más convirtiendo las páginas en imágenes.',
     montar(el) {
       let doc = null;
@@ -249,7 +230,7 @@ export const HERRAMIENTAS = [
     },
   },
   {
-    id: 'texto', grupo: 'Convertir', nombre: 'PDF a texto', icono: I.texto,
+    id: 'texto', categoria: 'pdf', nombre: 'PDF a texto', icono: I.texto,
     desc: 'Saca el texto del PDF para copiarlo o guardarlo como .txt.',
     montar(el) {
       let doc = null;
@@ -275,7 +256,7 @@ export const HERRAMIENTAS = [
 
   // ------------------------------------------------------------------ Editar
   {
-    id: 'numerar', grupo: 'Editar', nombre: 'Numerar páginas', icono: I.numerar,
+    id: 'numerar', categoria: 'pdf', nombre: 'Numerar páginas', icono: I.numerar,
     desc: 'Añade el número de página donde quieras.',
     montar(el) {
       let doc = null;
@@ -301,7 +282,7 @@ export const HERRAMIENTAS = [
     },
   },
   {
-    id: 'marca', grupo: 'Editar', nombre: 'Marca de agua', icono: I.marca,
+    id: 'marca', categoria: 'pdf', nombre: 'Marca de agua', icono: I.marca,
     desc: 'Un texto como «CONFIDENCIAL» o «COPIA» encima de cada página.',
     montar(el) {
       let doc = null;
@@ -331,7 +312,7 @@ export const HERRAMIENTAS = [
     },
   },
   {
-    id: 'firmar', grupo: 'Editar', nombre: 'Firmar PDF', icono: I.firmar,
+    id: 'firmar', categoria: 'pdf', nombre: 'Firmar PDF', icono: I.firmar,
     desc: 'Dibuja tu firma (o sube una imagen) y colócala en la página.',
     montar(el) {
       let doc = null, vista = null, firma = null, pagina = 0, rect = { fx: 0.55, fy: 0.78, fw: 0.3, fh: 0.08 };
@@ -433,7 +414,7 @@ export const HERRAMIENTAS = [
     },
   },
   {
-    id: 'metadatos', grupo: 'Editar', nombre: 'Metadatos', icono: I.metadatos,
+    id: 'metadatos', categoria: 'pdf', nombre: 'Metadatos', icono: I.metadatos,
     desc: 'Ve o cambia el título y el autor, o borra los datos ocultos del archivo.',
     montar(el) {
       let doc = null;

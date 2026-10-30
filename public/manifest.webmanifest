@@ -2,7 +2,7 @@
   "id": "/",
   "name": "Mutare",
   "short_name": "Mutare",
-  "description": "Herramientas de PDF que trabajan en tu dispositivo: juntar, separar, ordenar, convertir, numerar, firmar…",
+  "description": "Conversor de archivos que trabaja en tu dispositivo: PDF, imágenes, audio, vídeo, documentos, datos y ZIP.",
   "lang": "es",
   "start_url": "/",
   "scope": "/",

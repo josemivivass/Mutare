@@ -4,13 +4,17 @@
 // - La interfaz (HTML, CSS, JS) se pide primero a la red y, si no hay conexión,
 //   se sirve la última copia guardada: así siempre ves la versión más reciente.
 // - Las librerías, fuentes e iconos llevan la versión en la ruta y no cambian:
-//   se sirven de la caché y solo se descargan la primera vez que hacen falta.
-// Los PDF nunca pasan por aquí: se procesan en la página y no salen del navegador.
+//   se sirven de la caché y solo se descargan la primera vez que hacen falta
+//   (ffmpeg, 32 MB, solo si usas audio o vídeo).
+// Tus archivos nunca pasan por aquí: se procesan en la página y no salen del navegador.
 
-const CACHE = 'mutare-v1';
+const CACHE = 'mutare-v2';
 const INTERFAZ = [
-  '/', '/index.html', '/styles.css', '/tema.js', '/app.js', '/herramientas.js', '/ui.js',
-  '/motor.js', '/util.js', '/iconos.js', '/zip.js', '/manifest.webmanifest',
+  '/', '/index.html', '/styles.css', '/tema.js', '/app.js', '/ui.js', '/util.js', '/iconos.js', '/zip.js',
+  '/motor.js', '/motor-imagen.js', '/motor-ffmpeg.js', '/motor-datos.js', '/motor-documentos.js',
+  '/aislado.html', '/aislado.js', '/aislado-cliente.js', '/manifest.webmanifest',
+  '/herramientas/comun.js', '/herramientas/pdf.js', '/herramientas/imagenes.js', '/herramientas/multimedia.js',
+  '/herramientas/documentos.js', '/herramientas/datos.js', '/herramientas/archivos.js',
   '/iconos/icono.svg', '/iconos/icono-192.png', '/iconos/icono-512.png', '/iconos/apple-touch-icon.png',
 ];
 const LIBRERIAS = [
