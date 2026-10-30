@@ -1,7 +1,7 @@
 // Regenera en public/sw.js la lista de archivos que la app guarda al instalarse
 // para funcionar sin conexion: toda la interfaz, las tipografias, los iconos y
-// las librerias, salvo el nucleo de ffmpeg (32 MB), que se guarda la primera
-// vez que se usa audio o video.
+// todas las librerias, ffmpeg incluido (32 MB): asi audio y video tambien
+// funcionan sin red desde el primer momento.
 // Uso: node scripts/lista-offline.js   (despues de añadir o actualizar librerias)
 'use strict';
 const fs = require('fs');
@@ -9,7 +9,7 @@ const path = require('path');
 
 const PUB = path.join(__dirname, '..', 'public');
 const SW = path.join(PUB, 'sw.js');
-const FUERA = [/^vendor\/ffmpeg-core-/, /(^|\/)LICENSE[^/]*$/i, /\.(md|txt|map|d\.ts|d\.mts)$/i, /^sw\.js$/];
+const FUERA = [/(^|\/)LICENSE[^/]*$/i, /\.(md|txt|map|d\.ts|d\.mts)$/i, /^sw\.js$/];
 
 function recorrer(dir, base = '') {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => {

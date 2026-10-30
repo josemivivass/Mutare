@@ -3,14 +3,14 @@
 // Service worker de Mutare: permite usar la app sin conexión.
 // - La interfaz (HTML, CSS, JS) se pide primero a la red y, si no hay conexión,
 //   se sirve la última copia guardada: así siempre ves la versión más reciente.
-// - Al instalarse guarda todo (interfaz, tipografías y librerías) menos el
-//   núcleo de ffmpeg (32 MB), que se guarda la primera vez que se usa audio o
-//   vídeo. Así funciona sin conexión, aunque el servidor ya no exista.
+// - Al instalarse guarda todo (interfaz, tipografías y librerías, ffmpeg
+//   incluido: unos 40 MB). Así funciona sin conexión desde el primer momento,
+//   aunque el servidor ya no exista.
 // - Las librerías, fuentes e iconos llevan la versión en la ruta y no cambian:
 //   se sirven de la caché.
 // Tus archivos nunca pasan por aquí: se procesan en la página y no salen del navegador.
 
-const CACHE = 'mutare-v4';
+const CACHE = 'mutare-v5';
 // <lista-offline> (la genera scripts/lista-offline.js: no editar a mano)
 const OFFLINE = [
   "/",
@@ -59,6 +59,8 @@ const OFFLINE = [
   "/vendor/ffmpeg-0.12.10/types.js",
   "/vendor/ffmpeg-0.12.10/utils.js",
   "/vendor/ffmpeg-0.12.10/worker.js",
+  "/vendor/ffmpeg-core-0.12.6/ffmpeg-core.js",
+  "/vendor/ffmpeg-core-0.12.6/ffmpeg-core.wasm",
   "/vendor/heic2any-0.0.4/heic2any.min.js",
   "/vendor/mammoth-1.8.0/mammoth.browser.min.js",
   "/vendor/marked-18.0.10/marked.mjs",

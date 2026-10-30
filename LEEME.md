@@ -42,11 +42,12 @@ elegidos y estima lo que ocupará el archivo entero.
 
 **Funciona sin conexión.** Al abrirla (o instalarla como app en el móvil o el
 ordenador) guarda en el navegador todo lo que necesita: la interfaz, las
-tipografías y todas las librerías, unos 9 MB. Desde ese momento funciona aunque
-no haya red y aunque el servidor ya no exista. La única excepción es el núcleo de
-ffmpeg (32 MB), que se guarda la primera vez que se usa una herramienta de audio
-o vídeo. Si se añade o actualiza una librería, hay que regenerar la lista de lo
-que se guarda: `node scripts/lista-offline.js`. En ordenador y portátil, la portada enseña todas las
+tipografías y todas las librerías, ffmpeg incluido: unos 40 MB. Desde ese momento
+funciona todo, audio y vídeo también, aunque no haya red y aunque el servidor ya
+no exista. Si se añade o actualiza una librería, hay que regenerar la lista de lo
+que se guarda: `node scripts/lista-offline.js`.
+
+En ordenador y portátil, la portada enseña todas las
 herramientas de un vistazo, sin desplazarse. Hay un buscador en la cabecera
 («heic», «mp3», «excel»…).
 
@@ -110,7 +111,8 @@ actualizándose cada 5 minutos hasta que pongas otro.
   - `aislado.html`: página invisible para las dos librerías que necesitan evaluar
     código (heic2any y mammoth). Tiene su propia CSP: puede evaluar código pero no
     conectarse a nada. Así el resto de la app mantiene la política estricta.
-  - Cada librería se descarga solo cuando una herramienta la necesita.
+  - Cada librería se carga en memoria solo cuando una herramienta la necesita
+    (en el dispositivo ya están todas guardadas desde la instalación).
 
 ## Librerías (todas dentro de `public/vendor/`)
 
