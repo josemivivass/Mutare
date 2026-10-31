@@ -10,7 +10,7 @@
 //   se sirven de la caché.
 // Tus archivos nunca pasan por aquí: se procesan en la página y no salen del navegador.
 
-const CACHE = 'mutare-v6';
+const CACHE = 'mutare-v7';
 // <lista-offline> (la genera scripts/lista-offline.js: no editar a mano)
 const OFFLINE = [
   "/",
