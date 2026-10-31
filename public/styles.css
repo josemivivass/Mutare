@@ -91,7 +91,7 @@ a { color: var(--acento); }
   padding-top: env(safe-area-inset-top); padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right);
 }
 .topbar-inner {
-  max-width: 1400px; margin: 0 auto; padding: 10px 20px;
+  max-width: 2200px; margin: 0 auto; padding: 10px 20px;
   display: flex; align-items: center; gap: 20px;
 }
 .marca { display: flex; align-items: center; gap: 10px; color: var(--texto); text-decoration: none; min-width: 0; }
@@ -105,7 +105,7 @@ a { color: var(--acento); }
 .acciones-top { flex: 0 1 auto; min-width: 0; }
 .buscar-top { flex: 0 1 330px; width: 330px; min-width: 104px; height: 38px; box-sizing: border-box; }
 
-.contenido { max-width: 1400px; margin: 0 auto; padding: 16px max(20px, env(safe-area-inset-right)) calc(48px + env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left)); }
+.contenido { max-width: 2200px; margin: 0 auto; padding: 16px max(20px, env(safe-area-inset-right)) calc(48px + env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left)); }
 
 /* ---------- botones y campos ---------- */
 .btn {
@@ -419,3 +419,13 @@ audio.reproductor { background: transparent; height: 54px; }
   .portada.sin-desc .tarjeta-herr { align-items: center; padding-top: 7px; padding-bottom: 7px; }
 }
 @media (min-width: 1200px) and (max-width: 1279px) { .portada .tarjeta-herr b { font-size: .94rem; white-space: normal; } }
+
+/* ---------- logo y nombre apoyados en la misma línea ----------
+   El logo se coloca como una letra más del nombre: la base de su dibujo y la
+   base de las letras quedan a la misma altura en cualquier pantalla, sea cual
+   sea el tamaño de la letra. --hueco es lo que queda bajo el dibujo dentro de
+   su recuadro (de 40 unidades). En el ordenador, el nombre más grande. */
+.marca { --logo: 34px; --sep: 10px; --hueco: .055; display: block; white-space: nowrap; line-height: 1; }
+.marca svg, .marca img { display: inline-block; vertical-align: baseline; width: var(--logo); height: var(--logo); margin: 0 var(--sep) calc(var(--logo) * var(--hueco) * -1) 0; }
+@media (min-width: 1280px) { .marca-nombre { font-size: 2.15rem; } }
+@media (max-width: 760px) { .marca { --logo: 26px; --sep: 6px; } }
